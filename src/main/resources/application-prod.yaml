@@ -1,0 +1,31 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${DB_URL:?}
+    username: ${DB_USER:?}
+    password: ${DB_PASSWORD:?}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+
+services:
+  s3:
+    endpoint: ${S3_ENDPOINT:?}
+    accessKey: ${S3_ACCESS_KEY:?}
+    secretKey: ${S3_SECRET_KEY:?}
+    bucketName: ${S3_BUCKET:?}
+    urlExpiration: ${S3_URL_EXPIRATION:432000000}
+
+clients:
+  project-service: ${PROJECT_SVC_URL:?}
+  payment-service: ${PAYMENT_SVC_URL:?}

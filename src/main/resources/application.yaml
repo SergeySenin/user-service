@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: user-service
+  profiles:
+    default: local
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  data:
+    redis:
+      client-type: jedis
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api/v1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: [health, info]
+  endpoint:
+    health:
+      probes:
+        enabled: true

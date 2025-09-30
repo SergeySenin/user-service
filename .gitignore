@@ -1,0 +1,86 @@
+# Результаты сборки
+build/
+out/
+bin/
+
+# Системы сборки
+## Gradle
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+## Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+
+# Кэши зависимостей
+.cache/
+.workspace/
+
+# Java артефакты и бинарные файлы
+*.class
+*.ear
+*.gz
+*.jar
+*.tar
+*.war
+*.zip
+
+# Файлы сред разработки
+.apt_generated/
+.classpath
+.factorypath/
+.fleet/
+.idea/
+.iml
+.ipr
+.iws
+.nb-gradle/
+.project
+.settings/
+.springBeans
+.sts4-cache/
+.vscode/
+dist/
+nbbuild/
+nbdist/
+
+# Конфигурационные файлы приложения
+application-*.yaml
+!application.yaml
+!application-local.yaml
+!application-prod.yaml
+!application-test.yaml
+
+# Файлы окружения
+.env
+.env.*
+!.env.example
+
+# Логи и runtime файлы
+*.log
+logs/
+*.hprof
+hs_err_pid*
+java_error_in_*.log
+replay_pid*.log
+
+# Результаты тестирования
+test-output/
+test-results/
+*.jfr
+
+# Временные файлы
+tmp/
+*.tmp
+*.temp
+
+# Системные файлы ОС
+.DS_Store
+Thumbs.db
+
+# Инструменты анализа кода
+.sonarlint/
+.scannerwork/

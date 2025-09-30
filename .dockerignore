@@ -1,0 +1,38 @@
+# Системы сборки и кэши
+## Gradle
+.gradle/
+build/
+out/
+bin/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# Файлы сред разработки
+.fleet/
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.springBeans
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose*
+
+# Файлы окружения
+.env
+.env.*
+!.env.example
+
+# Логи и временные файлы
+*.log
+*.temp
+*.tmp
+logs/
+tmp/
+
+# Системные файлы ОС
+.DS_Store
+Thumbs.db
