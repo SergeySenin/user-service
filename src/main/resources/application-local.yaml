@@ -8,11 +8,10 @@ spring:
     password: password
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     show-sql: true
   liquibase:
-    enabled: true
-    change-log: classpath:db/changelog/db.changelog-master.yaml
+    enabled: false
   data:
     redis:
       host: localhost
@@ -22,7 +21,7 @@ services:
   s3:
     endpoint: http://127.0.0.1:9000
     accessKey: local
-    secretKey: local
+    secretKey: localpassword
     bucketName: corpbucket
     urlExpiration: 432000000
 
