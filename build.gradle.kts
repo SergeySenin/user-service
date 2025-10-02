@@ -103,4 +103,5 @@ dependencies {
 tasks.withType<Test> {
     useJUnitPlatform()
     testLogging { showStandardStreams = true }
+    systemProperty("spring.profiles.active", "test")
 }
