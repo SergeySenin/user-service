@@ -92,3 +92,36 @@ Swagger UI доступен по адресу `http://localhost:8080/api/v1/swag
 - `Dockerfile` — мультистейджовая сборка контейнера с настройкой профиля `prod` и JVM.
 - `install.sh` — сценарий офлайн-прогрева Gradle и Docker.
 - `src/main/resources/application-*.yaml` — параметры профилей `local`, `prod` и `test`.
+- `gradle/verification-metadata.xml` — контрольные суммы зависимостей для проверки целостности.
+
+## Проверка зависимостей Gradle
+
+В проекте включена строгая проверка зависимостей Gradle (`verification-metadata.xml`).
+Каждая сборка сверяет контрольные суммы артефактов из
+конфигураций `compileClasspath`и `runtimeClasspath`, поэтому
+любые изменения дерева зависимостей требуют обновления metadata.
+
+### Как обновлять metadata
+
+1. Внесите необходимые изменения в `build.gradle.kts` или `settings.gradle.kts`
+   (добавление/удаление зависимостей, изменение версий, глобальные `exclude`).
+2. Выполните команду:
+   ```bash
+   ./gradlew --write-verification-metadata sha256 \
+             --configurations compileClasspath runtimeClasspath
+   ```
+   Gradle пересоберёт `gradle/verification-metadata.xml`,
+   добавив контрольные суммы новых артефактов.
+3. Проверьте, что файл обновился автоматически, и 
+   закоммитьте его вместе с правками зависимостей.
+
+### Ограничения
+
+- Не используйте динамические версии (`+`, `latest.release` и т.п.)
+  — они ломают воспроизводимость и влекут ошибки верификации.
+- Старайтесь ограничивать `exclude` только нужными конфигурациями,
+  чтобы не вызывать массовых обновлений metadata.
+- Не редактируйте `verification-metadata.xml` вручную: любые изменения
+  вносите только через команду `--write-verification-metadata`.
+- При необходимости полной очистки окружения остановите демоны Gradle
+  (`./gradlew --stop`) и удалите каталоги `.gradle/` и `~/.gradle/caches`.
