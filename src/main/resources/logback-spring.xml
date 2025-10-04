@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true">
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>1024</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <neverBlock>true</neverBlock>
+        <appender-ref ref="CONSOLE" />
+    </appender>
+
+    <springProfile name="local">
+        <logger name="io.github.sergeysenin" level="DEBUG" />
+        <logger name="org.springframework" level="WARN" />
+        <logger name="org.hibernate" level="WARN" />
+        <logger name="org.apache" level="WARN" />
+
+        <root level="INFO">
+            <appender-ref ref="ASYNC" />
+        </root>
+    </springProfile>
+
+    <springProfile name="prod">
+        <logger name="io.github.sergeysenin" level="INFO" />
+        <logger name="org.springframework" level="WARN" />
+        <logger name="org.hibernate" level="WARN" />
+        <logger name="org.apache" level="WARN" />
+
+        <root level="INFO">
+            <appender-ref ref="ASYNC" />
+        </root>
+    </springProfile>
+
+    <springProfile name="test">
+        <logger name="io.github.sergeysenin" level="WARN" />
+        <logger name="org.springframework" level="WARN" />
+        <logger name="org.hibernate" level="WARN" />
+        <logger name="org.apache" level="WARN" />
+
+        <root level="WARN">
+            <appender-ref ref="ASYNC" />
+        </root>
+    </springProfile>
+
+</configuration>
