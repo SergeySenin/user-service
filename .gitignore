@@ -8,6 +8,7 @@ bin/
 .gradle/
 !gradle/wrapper/gradle-wrapper.jar
 !gradle/wrapper/gradle-wrapper.properties
+!verification-metadata.xml
 
 ## Maven
 target/
