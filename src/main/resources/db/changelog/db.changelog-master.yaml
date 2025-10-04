@@ -1,0 +1,4 @@
+databaseChangeLog:
+  - include:
+      file: changeset/user_V001__insert_users.sql
+      relativeToChangelogFile: true
