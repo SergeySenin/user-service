@@ -9,7 +9,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
-    show-sql: true
+    show-sql: true  # Подходит подробный вывод SQL в консоль, поэтому настройка включена.
   liquibase:
     enabled: false
   data:

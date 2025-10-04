@@ -11,7 +11,7 @@ spring:
     open-in-view: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: true  # Форматирование SQL включено — дополнительный шум не беспокоит.
   data:
     redis:
       client-type: jedis

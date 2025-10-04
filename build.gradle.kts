@@ -102,6 +102,7 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    // Вывод стандартных потоков включён — удобно видеть подробные логи тестов.
     testLogging { showStandardStreams = true }
     systemProperty("spring.profiles.active", "test")
 }
