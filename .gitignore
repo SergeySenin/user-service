@@ -85,6 +85,3 @@ Thumbs.db
 # Инструменты анализа кода
 .sonarlint/
 .scannerwork/
-
-# Keep Gradle wrapper JAR
-!gradle/wrapper/gradle-wrapper.jar
