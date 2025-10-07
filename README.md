@@ -100,7 +100,7 @@ Swagger UI доступен по адресу `http://localhost:8080/api/v1/swag
 
 В проекте включена строгая проверка зависимостей Gradle (`verification-metadata.xml`).
 Каждая сборка сверяет контрольные суммы артефактов из
-конфигураций `compileClasspath`и `runtimeClasspath`, поэтому
+конфигураций `compileClasspath` и `runtimeClasspath`, поэтому
 любые изменения дерева зависимостей требуют обновления metadata.
 
 ### Как обновлять metadata

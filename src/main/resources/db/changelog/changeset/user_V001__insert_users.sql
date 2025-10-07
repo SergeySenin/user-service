@@ -14,9 +14,9 @@ CREATE TABLE IF NOT EXISTS users (
     country_id BIGINT NOT NULL,
     city VARCHAR(64),
     experience SMALLINT,
-    profile_picture_file_id VARCHAR(256),
-    profile_picture_small_file_id VARCHAR(256),
-    profile_picture_medium_file_id VARCHAR(256),
+    avatar_original_path VARCHAR(256),
+    avatar_thumbnail_path VARCHAR(256),
+    avatar_profile_path VARCHAR(256)
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT fk_user_country FOREIGN KEY (country_id) REFERENCES countries(id)

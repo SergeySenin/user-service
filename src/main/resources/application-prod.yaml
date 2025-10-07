@@ -29,3 +29,16 @@ services:
 clients:
   project-service: ${PROJECT_SVC_URL:?}
   payment-service: ${PAYMENT_SVC_URL:?}
+
+user:
+  avatar:
+    storage-path: ${AVATAR_STORAGE_PATH:avatars}
+    sizes:
+      thumbnail:
+        max-side: ${AVATAR_THUMBNAIL_MAX_SIDE:170}
+      profile:
+        max-side: ${AVATAR_PROFILE_MAX_SIDE:1080}
+    allowed-mime-types:
+      - ${AVATAR_ALLOWED_MIME_TYPE_1:image/jpeg}
+      - ${AVATAR_ALLOWED_MIME_TYPE_2:image/png}
+      - ${AVATAR_ALLOWED_MIME_TYPE_3:image/webp}

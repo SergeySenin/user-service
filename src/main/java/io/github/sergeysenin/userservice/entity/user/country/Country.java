@@ -20,9 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(
-        name = "countries"
-)
+@Table(name = "countries")
 @Getter
 @Setter
 @Builder
@@ -34,12 +32,7 @@ public class Country {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(
-            name = "title",
-            length = 64,
-            nullable = false,
-            unique = true
-    )
+    @Column(name = "title", length = 64, nullable = false, unique = true)
     private String title;
 
     @Builder.Default

@@ -14,11 +14,11 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Embeddable
-public class UserProfilePicture {
+public class UserProfileAvatar {
 
-    private String fileId;
+    private String originalPath;
 
-    private String smallFileId;
+    private String thumbnailPath;
 
-    private String mediumFileId;
+    private String profilePath;
 }

@@ -28,3 +28,16 @@ services:
 clients:
   project-service: http://localhost:8082
   payment-service: http://localhost:9080
+
+user:
+  avatar:
+    storage-path: "avatars"
+    sizes:
+      thumbnail:
+        max-side: 170
+      profile:
+        max-side: 1080
+    allowed-mime-types:
+      - image/jpeg
+      - image/png
+      - image/webp

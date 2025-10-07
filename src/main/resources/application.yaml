@@ -30,3 +30,16 @@ management:
     health:
       probes:
         enabled: true
+
+user:
+  avatar:
+    storage-path: "avatars"
+    sizes:
+      thumbnail:
+        max-side: 170
+      profile:
+        max-side: 1080
+    allowed-mime-types:
+      - image/jpeg
+      - image/png
+      - image/webp

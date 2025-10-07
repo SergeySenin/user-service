@@ -27,9 +27,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(
-        name = "users"
-)
+@Table(name = "users")
 @Getter
 @Setter
 @Builder
@@ -41,104 +39,56 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(
-            name = "username",
-            length = 64,
-            nullable = false,
-            unique = true
-    )
+    @Column(name = "username", length = 64, nullable = false, unique = true)
     private String username;
 
-    @Column(
-            name = "email",
-            length = 256,
-            nullable = false,
-            unique = true
-    )
+    @Column(name = "email", length = 256, nullable = false, unique = true)
     private String email;
 
-    @Column(
-            name = "phone",
-            length = 16,
-            nullable = false,
-            unique = true
-    )
+    @Column(name = "phone", length = 16, nullable = false, unique = true)
     private String phone;
 
-    @Column(
-            name = "password",
-            length = 256,
-            nullable = false
-    )
+    @Column(name = "password", length = 256, nullable = false)
     private String password;
 
-    @Column(
-            name = "active",
-            nullable = false
-    )
+    @Column(name = "active", nullable = false)
     private boolean active;
 
-    @Column(
-            name = "about_me",
-            length = 2048
-    )
+    @Column(name = "about_me", length = 2048)
     private String aboutMe;
 
-    @ManyToOne(
-            fetch = FetchType.LAZY
-    )
-    @JoinColumn(
-            name = "country_id",
-            nullable = false
-    )
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "country_id", nullable = false)
     private Country country;
 
-    @Column(
-            name = "city",
-            length = 64
-    )
+    @Column(name = "city", length = 64)
     private String city;
 
-    @Column(
-            name = "experience"
-    )
+    @Column(name = "experience")
     private Short experience;
 
     @Embedded
     @AttributeOverrides({
             @AttributeOverride(
-                    name = "fileId",
-                    column = @Column(
-                            name = "profile_picture_file_id",
-                            length = 256
-                    )
+                    name = "originalPath",
+                    column = @Column(name = "avatar_original_path", length = 256)
             ),
             @AttributeOverride(
-                    name = "smallFileId",
-                    column = @Column(
-                            name = "profile_picture_small_file_id",
-                            length = 256
-                    )
+                    name = "thumbnailPath",
+                    column = @Column(name = "avatar_thumbnail_path", length = 256)
             ),
             @AttributeOverride(
-                    name = "mediumFileId",
-                    column = @Column(
-                            name = "profile_picture_medium_file_id",
-                            length = 256
-                    )
+                    name = "profilePath",
+                    column = @Column(name = "avatar_profile_path", length = 256)
             )
     })
-    private UserProfilePicture userProfilePicture;
+    private UserProfileAvatar userProfileAvatar;
 
     @CreationTimestamp
-    @Column(
-            name = "created_at"
-    )
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(
-            name = "updated_at"
-    )
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 }
