@@ -1,7 +1,12 @@
+import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.kotlin.dsl.getByType
+import org.gradle.testing.jacoco.tasks.JacocoReportBase
+
 plugins {
     java
     id("org.springframework.boot") version "3.5.6"
     id("io.spring.dependency-management") version "1.1.7"
+    jacoco
 }
 
 group = "io.github.sergeysenin"
@@ -14,6 +19,10 @@ java {
 
 repositories {
     mavenCentral()
+}
+
+jacoco {
+    toolVersion = "0.8.13"
 }
 
 configurations {
@@ -100,9 +109,61 @@ dependencies {
     testImplementation("com.redis.testcontainers:testcontainers-redis-junit:1.6.4")
 }
 
-tasks.withType<Test> {
+tasks.test {
     useJUnitPlatform()
     // Вывод стандартных потоков включён — удобно видеть подробные логи тестов.
     testLogging { showStandardStreams = true }
     systemProperty("spring.profiles.active", "test")
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+    }
+
+    configureJacocoClassDirectories(this)
+}
+
+tasks.jacocoTestCoverageVerification {
+    dependsOn(tasks.test)
+
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.8.toBigDecimal()
+            }
+        }
+    }
+
+    configureJacocoClassDirectories(this)
+}
+
+tasks.check {
+    dependsOn(tasks.jacocoTestCoverageVerification)
+}
+
+fun configureJacocoClassDirectories(jacocoTask: JacocoReportBase) {
+    val sourceSets = jacocoTask.project.extensions.getByType<SourceSetContainer>()
+    jacocoTask.classDirectories.setFrom(
+        jacocoTask.project.files(
+            sourceSets.getByName("main").output.asFileTree.matching {
+                exclude(
+                    "**/client/**",
+                    "**/config/**",
+                    "**/dto/**",
+                    "**/entity/**",
+                    "**/exception/**",
+                    "**/mapper/**",
+                    "**/repository/**",
+                    "**/com/json/**",
+                    "**/UserServiceApplication.*"
+                )
+            }
+        )
+    )
 }

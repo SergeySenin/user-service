@@ -11,7 +11,8 @@ spring:
       ddl-auto: none
     show-sql: true  # Подходит подробный вывод SQL в консоль, поэтому настройка включена.
   liquibase:
-    enabled: false
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
   data:
     redis:
       host: localhost

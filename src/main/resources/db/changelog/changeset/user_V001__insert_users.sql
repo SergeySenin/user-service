@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
     experience SMALLINT,
     avatar_original_path VARCHAR(256),
     avatar_thumbnail_path VARCHAR(256),
-    avatar_profile_path VARCHAR(256)
+    avatar_profile_path VARCHAR(256),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT fk_user_country FOREIGN KEY (country_id) REFERENCES countries(id)
