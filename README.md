@@ -45,8 +45,9 @@
 3. Healthcheck внутри образа обращается к `/api/v1/actuator/health/readiness`,
    поэтому его же следует мониторить в оркестраторе.
 
-Профиль `prod` активируется по умолчанию,
-параметры JVM задаются через `JAVA_TOOL_OPTIONS` в `Dockerfile`.
+Внутри контейнера профиль `prod` активируется переменной окружения
+`SPRING_PROFILES_ACTIVE=prod` (см. `Dockerfile`),
+а параметры JVM задаются через `JAVA_TOOL_OPTIONS`.
 
 ## Профили конфигурации
 
@@ -69,8 +70,11 @@
 обязательные отмечены оператором `:?`, остальные имеют дефолты.
 Перед запуском убедитесь, что changelog Liquibase находится
 по пути `classpath:db/changelog/db.changelog-master.yaml`.
-Осознанно подключаем чистый SQL-файл без `--liquibase formatted sql`
-и отдельных changeset’ов — для проекта не требуется отслеживание миграций и откатов средствами Liquibase.
+Changelog оформлен в формате `-- liquibase formatted sql` и разбит на два changeset’а:
+`app:users-schema` создаёт таблицы, а `app:users-demo-data` перезаписывает демо-данные.
+Демо-чейнджсет ограничен контекстами `local,test`: профиль `local` активирует только
+контекст `local`, а профиль `test` (при включении Liquibase) использует контекст `test`,
+поэтому TRUNCATE и загрузка демо-данных никогда не запустятся в `prod`.
 
 ## Офлайн-прогрев
 

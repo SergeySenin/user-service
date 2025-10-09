@@ -31,29 +31,23 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException exception) {
         Map<String, String> details = extractBindingResultDetails(exception.getBindingResult());
-        log.warn(
+        return warnAndBuild(
+                ErrorCode.VALIDATION_FAILED,
                 "Ошибка валидации аргументов контроллера: details={}, message={}",
                 details,
-                exception.getMessage()
+                exception
         );
-        return buildResponse(ErrorCode.VALIDATION_FAILED, null, details);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException exception) {
-        Map<String, String> details = exception.getConstraintViolations().stream()
-                .collect(Collectors.toMap(
-                        violation -> violation.getPropertyPath().toString(),
-                        GlobalExceptionHandler::resolveConstraintMessage,
-                        (existing, replacement) -> existing,
-                        LinkedHashMap::new
-                ));
-        log.warn(
+        Map<String, String> details = extractConstraintViolationDetails(exception);
+        return warnAndBuild(
+                ErrorCode.VALIDATION_FAILED,
                 "Нарушение ограничений данных: details={}, message={}",
                 details,
-                exception.getMessage()
+                exception
         );
-        return buildResponse(ErrorCode.VALIDATION_FAILED, null, details);
     }
 
     @ExceptionHandler(org.hibernate.exception.ConstraintViolationException.class)
@@ -75,12 +69,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BindException.class)
     public ResponseEntity<ErrorResponse> handleBindException(BindException exception) {
         Map<String, String> details = extractBindingResultDetails(exception.getBindingResult());
-        log.warn(
+        return warnAndBuild(
+                ErrorCode.BINDING_ERROR,
                 "Ошибка биндинга данных: details={}, message={}",
                 details,
-                exception.getMessage()
+                exception
         );
-        return buildResponse(ErrorCode.BINDING_ERROR, null, details);
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
@@ -114,6 +108,16 @@ public class GlobalExceptionHandler {
         return buildResponse(ErrorCode.UNEXPECTED_ERROR, null, null);
     }
 
+    private ResponseEntity<ErrorResponse> warnAndBuild(
+            ErrorCode errorCode,
+            String logTemplate,
+            Map<String, String> details,
+            Exception exception
+    ) {
+        log.warn(logTemplate, details, exception.getMessage());
+        return buildResponse(errorCode, null, details);
+    }
+
     private ResponseEntity<ErrorResponse> buildResponse(
             ErrorCode errorCode,
             String message,
@@ -125,19 +129,21 @@ public class GlobalExceptionHandler {
 
     private Map<String, String> extractBindingResultDetails(BindingResult bindingResult) {
         Map<String, String> details = new LinkedHashMap<>();
-        for (FieldError fieldError : bindingResult.getFieldErrors()) {
-            details.put(
-                    fieldError.getField(),
-                    resolveBindingMessage(fieldError.getDefaultMessage(), fieldError.getCode())
-            );
-        }
-        for (ObjectError objectError : bindingResult.getGlobalErrors()) {
-            details.put(
-                    objectError.getObjectName(),
-                    resolveBindingMessage(objectError.getDefaultMessage(), objectError.getCode())
-            );
+        for (ObjectError error : bindingResult.getAllErrors()) {
+            String key = error instanceof FieldError fieldError ? fieldError.getField() : error.getObjectName();
+            details.put(key, resolveBindingMessage(error.getDefaultMessage(), error.getCode()));
         }
         return details;
+    }
+
+    private Map<String, String> extractConstraintViolationDetails(ConstraintViolationException exception) {
+        return exception.getConstraintViolations().stream()
+                .collect(Collectors.toMap(
+                        violation -> violation.getPropertyPath().toString(),
+                        GlobalExceptionHandler::resolveConstraintMessage,
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new
+                ));
     }
 
     private static String resolveBindingMessage(String message, String fallback) {

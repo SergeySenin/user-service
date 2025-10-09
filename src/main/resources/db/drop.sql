@@ -1,4 +1,5 @@
 DROP TABLE IF EXISTS countries CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 
-DELETE FROM databasechangelog;
+DROP TABLE IF EXISTS databasechangelog CASCADE;
+DROP TABLE IF EXISTS databasechangeloglock CASCADE;

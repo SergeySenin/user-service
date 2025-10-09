@@ -12,6 +12,7 @@ spring:
     show-sql: false
   liquibase:
     enabled: false
+    contexts: test
 
   autoconfigure:
     exclude:

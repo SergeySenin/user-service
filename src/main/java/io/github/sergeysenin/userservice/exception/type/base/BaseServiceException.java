@@ -46,16 +46,13 @@ public abstract class BaseServiceException extends RuntimeException {
         if (details == null || details.isEmpty()) {
             return Map.of();
         }
-        for (Map.Entry<String, String> entry : details.entrySet()) {
-            if (entry.getKey() == null) {
-                throw new NullPointerException("details содержит null-ключ");
-            }
-            if (entry.getValue() == null) {
-                throw new NullPointerException(
-                        "details содержит null-значение для ключа '" + entry.getKey() + "'"
-                );
-            }
-        }
+        details.forEach((key, value) -> {
+            String ensuredKey = Objects.requireNonNull(key, "details содержит null-ключ");
+            Objects.requireNonNull(
+                    value,
+                    () -> "details содержит null-значение для ключа '" + ensuredKey + "'"
+            );
+        });
         return Map.copyOf(details);
     }
 
