@@ -24,9 +24,9 @@ public record ErrorResponse(
 
     public static ErrorResponse of(ErrorCode errorCode, String message, Map<String, String> details) {
         Objects.requireNonNull(errorCode, "errorCode не может быть null");
-        String resolvedMessage = (message == null || message.isBlank())
-                ? errorCode.getDefaultMessage()
-                : message;
+        String resolvedMessage = (message == null || message.isBlank()) ?
+                errorCode.getDefaultMessage() :
+                message;
         return new ErrorResponse(errorCode.getCode(), resolvedMessage, null, details);
     }
 }

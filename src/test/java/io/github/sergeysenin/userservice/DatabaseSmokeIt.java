@@ -23,8 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest
 @Testcontainers
 @ActiveProfiles("test")
-@DisplayName("DatabaseSmokeIT: контекст поднимается и выполняется простой SQL")
-class DatabaseSmokeIT {
+@DisplayName("DatabaseSmokeIt: контекст поднимается и выполняется простой SQL")
+class DatabaseSmokeIt {
 
     private static final String POSTGRES_IMAGE = "postgres:16.3";
     private static final String DB_NAME = "user_service";
@@ -51,7 +51,7 @@ class DatabaseSmokeIT {
     DataSource dataSource;
 
     @Test
-    @SuppressWarnings({"SqlDialectInspection","SqlNoDataSourceInspection"})
+    @SuppressWarnings({"SqlDialectInspection", "SqlNoDataSourceInspection"})
     @DisplayName("должен выполнять 'select 1' при корректной конфигурации DataSource")
     void shouldExecuteSelectOneWhenDataSourceConfigured() throws Exception {
         var sql = "select 1";
