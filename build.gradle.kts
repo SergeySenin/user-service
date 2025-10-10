@@ -1,9 +1,17 @@
+import org.gradle.api.file.RegularFile
+import org.gradle.api.plugins.quality.Checkstyle
+import org.gradle.api.plugins.quality.CheckstyleExtension
 import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.getByType
+import org.gradle.kotlin.dsl.named
+import org.gradle.testing.jacoco.tasks.JacocoCoverageVerification
+import org.gradle.testing.jacoco.tasks.JacocoReport
 import org.gradle.testing.jacoco.tasks.JacocoReportBase
 
 plugins {
     java
+    checkstyle
     id("org.springframework.boot") version "3.5.6"
     id("io.spring.dependency-management") version "1.1.7"
     jacoco
@@ -19,10 +27,6 @@ java {
 
 repositories {
     mavenCentral()
-}
-
-jacoco {
-    toolVersion = "0.8.13"
 }
 
 configurations {
@@ -114,11 +118,57 @@ tasks.test {
     // Вывод стандартных потоков включён — удобно видеть подробные логи тестов.
     testLogging { showStandardStreams = true }
     systemProperty("spring.profiles.active", "test")
-    finalizedBy(tasks.jacocoTestReport)
+    finalizedBy(tasks.named("jacocoTestReport"))
 }
 
-tasks.jacocoTestReport {
-    dependsOn(tasks.test)
+tasks.named("check") {
+    dependsOn(
+        tasks.named("jacocoTestCoverageVerification"),
+        tasks.named("checkstyleMain"),
+        tasks.named("checkstyleTest")
+    )
+}
+
+fun configureCheckstyleTask(
+    taskProvider: TaskProvider<Checkstyle>,
+    stylesheet: RegularFile,
+    excludePatterns: List<String>
+) {
+    taskProvider.configure {
+        reports {
+            xml.required.set(true)
+            html.required.set(true)
+            html.stylesheet = resources.text.fromFile(stylesheet)
+        }
+
+        excludePatterns.forEach(::exclude)
+    }
+}
+
+val checkstyleStylesheet = layout.projectDirectory.file("config/checkstyle/checkstyle-noframes-severity-sorted.xsl")
+val checkstyleExcludePatterns = listOf("**/resources/**", "**/generated/**")
+val checkstyleTaskNames = listOf("checkstyleMain", "checkstyleTest")
+
+extensions.configure<CheckstyleExtension>("checkstyle") {
+    toolVersion = "10.17.0"
+    configDirectory.set(layout.projectDirectory.dir("config/checkstyle"))
+    config = resources.text.fromFile(layout.projectDirectory.file("config/checkstyle/checkstyle.xml"))
+    configProperties["checkstyle.enableExternalDtdLoad"] = "true"
+    isIgnoreFailures = false
+}
+
+checkstyleTaskNames
+    .map { tasks.named<Checkstyle>(it) }
+    .forEach { task ->
+        configureCheckstyleTask(task, checkstyleStylesheet, checkstyleExcludePatterns)
+    }
+
+jacoco {
+    toolVersion = "0.8.13"
+}
+
+tasks.named<JacocoReport>("jacocoTestReport") {
+    dependsOn(tasks.named("test"))
 
     reports {
         xml.required.set(true)
@@ -129,8 +179,8 @@ tasks.jacocoTestReport {
     configureJacocoClassDirectories(this)
 }
 
-tasks.jacocoTestCoverageVerification {
-    dependsOn(tasks.test)
+tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
+    dependsOn(tasks.named("test"))
 
     violationRules {
         rule {
@@ -141,10 +191,6 @@ tasks.jacocoTestCoverageVerification {
     }
 
     configureJacocoClassDirectories(this)
-}
-
-tasks.check {
-    dependsOn(tasks.jacocoTestCoverageVerification)
 }
 
 fun configureJacocoClassDirectories(jacocoTask: JacocoReportBase) {
