@@ -15,6 +15,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -28,14 +29,14 @@ import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "users")
-@Getter
-@Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter(AccessLevel.PROTECTED)
 public class User {
 
     @Id
+    @Setter(AccessLevel.NONE)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -51,7 +52,6 @@ public class User {
     @Column(name = "password", length = 256, nullable = false)
     private String password;
 
-    @Builder.Default
     @Column(name = "active", nullable = false)
     private boolean active = true;
 
@@ -92,4 +92,33 @@ public class User {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
+
+    @Builder(builderClassName = "UserBuilder", builderMethodName = "builder", access = AccessLevel.PUBLIC)
+    static User createUser(
+            String username,
+            String email,
+            String phone,
+            String password,
+            Boolean active,
+            String aboutMe,
+            Country country,
+            String city,
+            Short experience,
+            UserProfileAvatar userProfileAvatar
+    ) {
+        User user = new User();
+        user.username = username;
+        user.email = email;
+        user.phone = phone;
+        user.password = password;
+        user.aboutMe = aboutMe;
+        user.country = country;
+        user.city = city;
+        user.experience = experience;
+        user.userProfileAvatar = userProfileAvatar;
+        if (active != null) {
+            user.active = active;
+        }
+        return user;
+    }
 }

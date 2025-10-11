@@ -165,11 +165,48 @@ Swagger UI доступен по адресу `http://localhost:8080/api/v1/swag
 
 1. Внесите необходимые изменения в `build.gradle.kts` или `settings.gradle.kts`
    (добавление/удаление зависимостей, изменение версий, глобальные `exclude`).
-2. Выполните команду:
+2. Выполните команду для вашей среды.
+
+   **Linux/macOS (bash/zsh)**
+
    ```bash
-   ./gradlew --write-verification-metadata sha256 \
-             --configurations compileClasspath runtimeClasspath
+   ./gradlew --write-verification-metadata sha256
    ```
+
+   При необходимости принудительно обновить артефакты перед
+   генерацией metadata добавьте `--refresh-dependencies`:
+
+   ```bash
+   ./gradlew --write-verification-metadata sha256 --refresh-dependencies
+   ```
+
+   **Windows (PowerShell)**
+
+   ```powershell
+   .\gradlew `
+     --write-verification-metadata sha256 `
+   ```
+
+   С обновлением зависимостей:
+
+   ```powershell
+   .\gradlew `
+     --write-verification-metadata sha256 `
+     --refresh-dependencies
+   ```
+
+   **Windows (cmd.exe)**
+
+   ```cmd
+   gradlew --write-verification-metadata sha256
+   ```
+
+   С обновлением зависимостей:
+
+   ```cmd
+   gradlew --write-verification-metadata sha256 --refresh-dependencies
+   ```
+
    Gradle пересоберёт `gradle/verification-metadata.xml`,
    добавив контрольные суммы новых артефактов.
 3. Проверьте, что файл обновился автоматически, и 
