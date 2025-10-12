@@ -203,7 +203,6 @@ fun configureJacocoClassDirectories(jacocoTask: JacocoReportBase) {
                     "**/config/**",
                     "**/dto/**",
                     "**/entity/**",
-                    "**/exception/**",
                     "**/mapper/**",
                     "**/repository/**",
                     "**/com/json/**",

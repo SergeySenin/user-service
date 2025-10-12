@@ -25,6 +25,7 @@ services:
     accessKey: local
     secretKey: localpassword
     bucketName: corpbucket
+    region: us-east-1
     urlExpiration: 432000000
 
 clients:
