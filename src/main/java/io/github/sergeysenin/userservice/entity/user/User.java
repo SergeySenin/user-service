@@ -121,4 +121,8 @@ public class User {
         }
         return user;
     }
+
+    public void updateAvatar(UserProfileAvatar avatar) {
+        this.userProfileAvatar = avatar;
+    }
 }

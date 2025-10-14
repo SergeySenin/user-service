@@ -1,64 +1,65 @@
 package io.github.sergeysenin.userservice.config.s3;
 
-// Импорты валидации
-// Импорты валидации
-// Импорты валидации
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-// import org.springframework.boot.context.properties.bind.DefaultValue;
-// Возможные аннотации
+import org.springframework.boot.context.properties.bind.DefaultValue;
+import org.springframework.boot.convert.DurationUnit;
 import org.springframework.validation.annotation.Validated;
 
-// Возможные аннотации
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 
-/*
-S3Properties — типобезопасная конфигурация.
-
-Значения подставляются из application-local.yaml и application-prod.yaml.
+/**
+ * {@link S3Properties} — типобезопасная конфигурация подключения к Minio/S3.
  */
 @Validated
 @ConfigurationProperties(prefix = "services.s3")
 public record S3Properties(
 
-        // Аннотации валидации
-        // Поле
+        @NotBlank(message = "Endpoint хранилища не может быть пустым")
+        String endpoint,
 
-        // Аннотации валидации
-        // Поле
+        @NotBlank(message = "Access key не может быть пустым")
+        String accessKey,
 
-        // Аннотации валидации
-        // Поле
+        @NotBlank(message = "Secret key не может быть пустым")
+        String secretKey,
 
-        // Аннотации валидации
-        // Поле
+        @NotBlank(message = "Название бакета не может быть пустым")
+        String bucketName,
 
-        // Аннотации валидации
-        // Поле
+        @NotBlank(message = "Регион не может быть пустым")
+        String region,
+
+        @NotNull(message = "Время жизни presigned URL должно быть задано")
+        @DurationUnit(ChronoUnit.MILLIS)
+        Duration urlExpiration
 ) {
 
     public S3Properties(
-
-            // @DefaultValue("") - возможно
-            // Поле
-
-            // @DefaultValue("") - возможно
-            // Поле
-
-            // @DefaultValue("") - возможно
-            // Поле
-
-            // @DefaultValue("") - возможно
-            // Поле
-
-            // @DefaultValue("") - возможно
-            // Поле
+            String endpoint,
+            String accessKey,
+            String secretKey,
+            String bucketName,
+            String region,
+            @DefaultValue("PT15M") Duration urlExpiration
     ) {
-        // this. = ;
-        // this. = ;
-        // this. = ;
-        // this. = ;
-        // this. = ;
+        this.endpoint = requireNonBlank(endpoint, "endpoint");
+        this.accessKey = requireNonBlank(accessKey, "accessKey");
+        this.secretKey = requireNonBlank(secretKey, "secretKey");
+        this.bucketName = requireNonBlank(bucketName, "bucketName");
+        this.region = requireNonBlank(region, "region");
+        this.urlExpiration = Objects.requireNonNull(urlExpiration, "urlExpiration не может быть null");
     }
 
-    // Возможные методы класса
+    private static String requireNonBlank(String value, String fieldName) {
+        String trimmed = Objects.requireNonNull(value, fieldName + " не может быть null").trim();
+        if (trimmed.isEmpty()) {
+            throw new IllegalArgumentException(fieldName + " не может быть пустым");
+        }
+        return trimmed;
+    }
 }
