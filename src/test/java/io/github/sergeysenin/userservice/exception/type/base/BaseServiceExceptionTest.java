@@ -177,8 +177,8 @@ class BaseServiceExceptionTest {
             );
 
             assertTrue(
-                    exception.getMessage() != null
-                            && exception.getMessage().startsWith(NULL_VALUE_EXCEPTION_MESSAGE_PREFIX),
+                    exception.getMessage() != null &&
+                            exception.getMessage().startsWith(NULL_VALUE_EXCEPTION_MESSAGE_PREFIX),
                     "Сообщение исключения должно информировать о null-значении"
             );
         }

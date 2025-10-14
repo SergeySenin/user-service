@@ -286,8 +286,8 @@ class ErrorResponseTest {
                 () -> {
                     Instant actualTimestamp = actualResponse.timestamp();
                     assertNotNull(actualTimestamp, "Timestamp не должен быть null");
-                    assertTrue(!actualTimestamp.isBefore(lowerTimestampBound)
-                                    && !actualTimestamp.isAfter(upperTimestampBound),
+                    assertTrue(!actualTimestamp.isBefore(lowerTimestampBound) &&
+                                    !actualTimestamp.isAfter(upperTimestampBound),
                             "Timestamp должен находиться в ожидаемом диапазоне");
                 },
                 () -> assertEquals(expectedDetails, actualResponse.details(),
