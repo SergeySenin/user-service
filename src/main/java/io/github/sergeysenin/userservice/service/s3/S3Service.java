@@ -116,10 +116,14 @@ public class S3Service {
     }
 
     private static void requireKey(String key) {
-        if (key == null || key.isBlank()) throw new FileStorageException("Пустой ключ объекта");
+        if (key == null || key.isBlank()) {
+            throw new FileStorageException("Пустой ключ объекта");
+        }
     }
 
     private static void requireData(byte[] data) {
-        if (data == null || data.length == 0) throw new FileStorageException("Пустое содержимое файла");
+        if (data == null || data.length == 0) {
+            throw new FileStorageException("Пустое содержимое файла");
+        }
     }
 }
