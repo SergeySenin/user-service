@@ -1,64 +1,59 @@
 package io.github.sergeysenin.userservice.config.s3;
 
-// Импорты валидации
-// Импорты валидации
-// Импорты валидации
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-// import org.springframework.boot.context.properties.bind.DefaultValue;
-// Возможные аннотации
+import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.validation.annotation.Validated;
 
-// Возможные аннотации
+import java.time.Duration;
 
-/*
-S3Properties — типобезопасная конфигурация.
-
-Значения подставляются из application-local.yaml и application-prod.yaml.
- */
 @Validated
 @ConfigurationProperties(prefix = "services.s3")
 public record S3Properties(
 
-        // Аннотации валидации
-        // Поле
+        @NotBlank
+        String endpoint,
 
-        // Аннотации валидации
-        // Поле
+        @NotBlank
+        String accessKey,
 
-        // Аннотации валидации
-        // Поле
+        @NotBlank
+        String secretKey,
 
-        // Аннотации валидации
-        // Поле
+        @NotBlank
+        String bucketName,
 
-        // Аннотации валидации
-        // Поле
+        String region,
+
+        @NotNull
+        @Positive
+        Duration urlExpiration
 ) {
 
     public S3Properties(
 
-            // @DefaultValue("") - возможно
-            // Поле
+            String endpoint,
 
-            // @DefaultValue("") - возможно
-            // Поле
+            String accessKey,
 
-            // @DefaultValue("") - возможно
-            // Поле
+            String secretKey,
 
-            // @DefaultValue("") - возможно
-            // Поле
+            String bucketName,
 
-            // @DefaultValue("") - возможно
-            // Поле
+            @DefaultValue("us-east-1")
+            String region,
+
+            @DefaultValue("PT120H")
+            Duration urlExpiration
     ) {
-        // this. = ;
-        // this. = ;
-        // this. = ;
-        // this. = ;
-        // this. = ;
+        this.endpoint = endpoint;
+        this.accessKey = accessKey;
+        this.secretKey = secretKey;
+        this.bucketName = bucketName;
+        this.region = region;
+        this.urlExpiration = urlExpiration;
     }
-
-    // Возможные методы класса
 }

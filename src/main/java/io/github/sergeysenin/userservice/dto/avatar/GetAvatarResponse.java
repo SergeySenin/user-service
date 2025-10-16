@@ -1,8 +1,16 @@
 package io.github.sergeysenin.userservice.dto.avatar;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public record GetAvatarResponse(
-        // поле
-        // поле
-        // поле
+
+        @JsonProperty("userId")
+        Long userId,
+
+        @JsonProperty("files")
+        AvatarObjectPathsDto fileIds,
+
+        @JsonProperty("hasAvatar")
+        boolean hasAvatar
 ) {
 }

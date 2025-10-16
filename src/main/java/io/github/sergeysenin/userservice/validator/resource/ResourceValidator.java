@@ -6,15 +6,29 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Component;
 
-/*
-ResourceValidator — проверяет, что файл передан, не пустой, укладывается в лимит,
-имеет корректный префикс и расширение из поддерживаемого списка, используя AvatarProperties.
- */
 @Component
 @RequiredArgsConstructor
 public class ResourceValidator {
 
     private final AvatarProperties avatarProperties;
 
-    // Необходимая валидация
+
 }
+
+// Написать:
+// public String getValidatedExtension(MultipartFile file) {
+// Проверка существования файла
+// Проверка пустоты файла
+// Проверка размера файла; уже есть в src/main/resources/application.yaml:
+//     multipart:
+//      max-file-size: 5MB
+//      max-request-size: 5MB
+// Проверка имени файла
+// Проверка MIME-типа на наличие
+// Проверка префикса MIME-типа
+// Проверка разрешенных MIME-типов
+// Проверка расширения файла
+// Проверка поддерживаемых форматов по расширению
+// Определение расширения из MIME-типа
+// Сравнение расширений
+// }

@@ -1,9 +1,10 @@
 package io.github.sergeysenin.userservice.service.avatar;
 
 import io.github.sergeysenin.userservice.config.avatar.AvatarProperties;
-import io.github.sergeysenin.userservice.dto.avatar.DeleteAvatarResponse;
 import io.github.sergeysenin.userservice.dto.avatar.GetAvatarResponse;
 import io.github.sergeysenin.userservice.dto.avatar.UploadAvatarResponse;
+import io.github.sergeysenin.userservice.dto.avatar.DeleteAvatarResponse;
+import io.github.sergeysenin.userservice.dto.avatar.AvatarObjectPathsDto;
 import io.github.sergeysenin.userservice.service.avatar.generator.AvatarFileNameGenerator;
 import io.github.sergeysenin.userservice.service.resource.ResourceService;
 import io.github.sergeysenin.userservice.service.s3.S3Service;
@@ -16,10 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-/*
-AvatarService — координирует проверку файлов, генерацию имён, ресайз,
-работу с хранилищем и обновление профиля пользователя.
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -33,19 +30,49 @@ public class AvatarService {
     private final AvatarProperties avatarProperties;
 
     public UploadAvatarResponse uploadAvatar(Long userId, MultipartFile file) {
-        // Реализация метода
-        return null;
+
+        return new UploadAvatarResponse(userId, new AvatarObjectPathsDto(null, null, null), null);
     }
 
     public GetAvatarResponse getAvatar(Long userId) {
-        // Реализация метода
-        return null;
+
+        return new GetAvatarResponse(userId, new AvatarObjectPathsDto(null, null, null), false);
     }
 
     public DeleteAvatarResponse deleteAvatar(Long userId) {
-        // Реализация метода
-        return null;
-    }
 
-    // Возможные вспомогательные приватные методы
+        return new DeleteAvatarResponse(userId, false, null);
+    }
 }
+
+// Написать:
+// public UploadAvatarResponse uploadAvatar(Long userId, MultipartFile file) {
+// Логика получения и валидации пользователя (userService)
+// Логика валидации файла пользователя(resourceValidator)
+// Продумать логику работы со старым именем файла пользователя (...)
+// Логика генерации нового имени файла пользователя(avatarFileNameGenerator)
+// Продумать логику работы изменения файла пользователя (resourceService)
+// Продумать логику работы обновления доменной модели и сохранение (...)
+// Продумать логику обработки ошибок и логирование (...)
+// Формирование ответа (UploadAvatarResponse)
+// }
+//
+// public GetAvatarResponse getAvatar(Long userId) {
+// Логика получения и валидации пользователя (userService)
+// Продумать логику валидации наличия аватара (AvatarNotFoundException)
+// Продумать логику генерации временных URL (s3Service)
+// Продумать логику обработки ошибок и логирование
+// Формирование ответа (GetAvatarResponse)
+// }
+//
+// public DeleteAvatarResponse deleteAvatar(Long userId) {
+// Логика получения и валидации пользователя (userService)
+// Продумать логику валидации наличия аватара (AvatarNotFoundException)
+// Продумать логику удаления файлов (s3Service)
+// Продумать логику обновления доменной модели и сохранение (...)
+// Продумать логику обработки ошибок и логирование (...)
+// Формирование ответа (DeleteAvatarResponse)
+// }
+//
+// Продумать уровни транзакций;
+// Продумать логику обработки ошибок и логирование (рассмотреть возможный откат) (...)

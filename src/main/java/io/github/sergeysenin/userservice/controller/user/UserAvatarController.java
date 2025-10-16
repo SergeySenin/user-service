@@ -5,6 +5,7 @@ import io.github.sergeysenin.userservice.dto.avatar.GetAvatarResponse;
 import io.github.sergeysenin.userservice.dto.avatar.UploadAvatarResponse;
 import io.github.sergeysenin.userservice.service.avatar.AvatarService;
 
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
-public class UserController {
+public class UserAvatarController {
 
     private final AvatarService avatarService;
 
@@ -35,7 +36,8 @@ public class UserController {
     @ResponseStatus(HttpStatus.OK)
     public UploadAvatarResponse uploadAvatar(
             @PathVariable("userId")
-            @Positive(message = "Идентификатор пользователя должен быть положительным")
+            @NotNull
+            @Positive
             Long userId,
 
             @RequestParam("file")
@@ -49,7 +51,8 @@ public class UserController {
     @ResponseStatus(HttpStatus.OK)
     public GetAvatarResponse getAvatar(
             @PathVariable("userId")
-            @Positive(message = "Идентификатор пользователя должен быть положительным")
+            @NotNull
+            @Positive
             Long userId
     ) {
         log.info("Запрос на получение аватара: userId={}", userId);
@@ -60,7 +63,8 @@ public class UserController {
     @ResponseStatus(HttpStatus.OK)
     public DeleteAvatarResponse deleteAvatar(
             @PathVariable("userId")
-            @Positive(message = "Идентификатор пользователя должен быть положительным")
+            @NotNull
+            @Positive
             Long userId
     ) {
         log.info("Запрос на удаление аватара: userId={}", userId);
