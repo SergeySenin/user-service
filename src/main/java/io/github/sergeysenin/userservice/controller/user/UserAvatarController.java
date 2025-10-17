@@ -5,6 +5,9 @@ import io.github.sergeysenin.userservice.dto.avatar.GetAvatarResponse;
 import io.github.sergeysenin.userservice.dto.avatar.UploadAvatarResponse;
 import io.github.sergeysenin.userservice.service.avatar.AvatarService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
@@ -28,12 +31,20 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
+@Tag(
+        name = "Аватары пользователей",
+        description = "Операции загрузки, получения, удаления аватаров пользователей"
+)
 public class UserAvatarController {
 
     private final AvatarService avatarService;
 
     @PostMapping("/{userId}/avatar")
     @ResponseStatus(HttpStatus.OK)
+    @Operation(
+            summary = "Загрузить новый аватар",
+            description = "Принимает файл изображения, сохраняет все версии в S3 и возвращает ключи объектов"
+    )
     public UploadAvatarResponse uploadAvatar(
             @PathVariable("userId")
             @NotNull
@@ -49,6 +60,10 @@ public class UserAvatarController {
 
     @GetMapping("/{userId}/avatar")
     @ResponseStatus(HttpStatus.OK)
+    @Operation(
+            summary = "Получить ссылки на аватар",
+            description = "Возвращает предварительно подписанные URL для всех доступных версий аватара"
+    )
     public GetAvatarResponse getAvatar(
             @PathVariable("userId")
             @NotNull
@@ -61,6 +76,10 @@ public class UserAvatarController {
 
     @DeleteMapping("/{userId}/avatar")
     @ResponseStatus(HttpStatus.OK)
+    @Operation(
+            summary = "Удалить аватар",
+            description = "Удаляет все версии аватара пользователя из S3 и базы данных"
+    )
     public DeleteAvatarResponse deleteAvatar(
             @PathVariable("userId")
             @NotNull

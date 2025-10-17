@@ -2,7 +2,6 @@ package io.github.sergeysenin.userservice.config.s3;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
@@ -29,7 +28,6 @@ public record S3Properties(
         String region,
 
         @NotNull
-        @Positive
         Duration urlExpiration
 ) {
 

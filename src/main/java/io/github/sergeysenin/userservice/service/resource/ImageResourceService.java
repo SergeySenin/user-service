@@ -24,7 +24,6 @@ public class ImageResourceService implements ResourceService {
              ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
 
             Thumbnails.of(inputStream)
-                    .keepAspectRatio(true)
                     .size(maxSide, maxSide)
                     .outputFormat(format)
                     .toOutputStream(outputStream);
