@@ -11,7 +11,8 @@ spring:
     open-in-view: false
     properties:
       hibernate:
-        format_sql: true  # Форматирование SQL включено — дополнительный шум не беспокоит.
+        # Форматирование SQL включено — дополнительный шум не беспокоит.
+        format_sql: true
   data:
     redis:
       client-type: jedis
@@ -25,7 +26,9 @@ management:
   endpoints:
     web:
       exposure:
-        include: [health, info]
+        include:
+          - health
+          - info
   endpoint:
     health:
       probes:
@@ -33,7 +36,7 @@ management:
 
 user:
   avatar:
-    storage-path: "avatars"
+    storage-path: avatars
     sizes:
       thumbnail:
         max-side: 170

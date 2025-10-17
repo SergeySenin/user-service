@@ -31,6 +31,8 @@ public record S3Properties(
         Duration urlExpiration
 ) {
 
+    private static final String DEFAULT_REGION = "us-east-1";
+
     public S3Properties(
 
             String endpoint,
@@ -41,7 +43,7 @@ public record S3Properties(
 
             String bucketName,
 
-            @DefaultValue("us-east-1")
+            @DefaultValue(DEFAULT_REGION)
             String region,
 
             @DefaultValue("PT120H")
@@ -51,7 +53,7 @@ public record S3Properties(
         this.accessKey = accessKey;
         this.secretKey = secretKey;
         this.bucketName = bucketName;
-        this.region = region;
+        this.region = region == null ? DEFAULT_REGION : region;
         this.urlExpiration = urlExpiration;
     }
 }

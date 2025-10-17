@@ -9,7 +9,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
-    show-sql: true  # Подходит подробный вывод SQL в консоль, поэтому настройка включена.
+    # Подходит подробный вывод SQL в консоль, поэтому настройка включена.
+    show-sql: true
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yaml
@@ -22,25 +23,12 @@ spring:
 services:
   s3:
     endpoint: http://127.0.0.1:9000
-    accessKey: local
-    secretKey: localpassword
-    bucketName: corpbucket
+    access-key: local
+    secret-key: localpassword
+    bucket-name: corpbucket
     region: us-east-1
-    urlExpiration: 432000000
+    url-expiration: PT120H
 
 clients:
   project-service: http://localhost:8082
   payment-service: http://localhost:9080
-
-user:
-  avatar:
-    storage-path: "avatars"
-    sizes:
-      thumbnail:
-        max-side: 170
-      profile:
-        max-side: 1080
-    allowed-mime-types:
-      - image/jpeg
-      - image/png
-      - image/webp

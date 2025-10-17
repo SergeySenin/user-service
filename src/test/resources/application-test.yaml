@@ -13,20 +13,20 @@ spring:
   liquibase:
     enabled: false
     contexts: test
-
+  main:
+    banner-mode: off
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
 
-  main:
-    banner-mode: "off"
-
 management:
   endpoints:
     web:
       exposure:
-        include: [health, info]
+        include:
+          - health
+          - info
   health:
     redis:
       enabled: false
@@ -36,3 +36,12 @@ logging:
     root: WARN
     org.springframework.test: INFO
     org.hibernate.SQL: OFF
+
+services:
+  s3:
+    endpoint: http://localhost:9000
+    access-key: test-access-key
+    secret-key: test-secret-key
+    bucket-name: test-bucket
+    region: us-east-1
+    url-expiration: PT1H
