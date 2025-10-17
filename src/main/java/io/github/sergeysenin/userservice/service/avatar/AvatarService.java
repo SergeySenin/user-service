@@ -5,9 +5,11 @@ import io.github.sergeysenin.userservice.dto.avatar.GetAvatarResponse;
 import io.github.sergeysenin.userservice.dto.avatar.UploadAvatarResponse;
 import io.github.sergeysenin.userservice.dto.avatar.DeleteAvatarResponse;
 import io.github.sergeysenin.userservice.dto.avatar.AvatarObjectPathsDto;
+import io.github.sergeysenin.userservice.entity.user.User;
 import io.github.sergeysenin.userservice.entity.user.UserProfileAvatar;
 import io.github.sergeysenin.userservice.exception.type.AvatarNotFoundException;
 import io.github.sergeysenin.userservice.exception.type.AvatarUploadException;
+import io.github.sergeysenin.userservice.mapper.avatar.AvatarMapper;
 import io.github.sergeysenin.userservice.service.avatar.generator.AvatarFileNameGenerator;
 import io.github.sergeysenin.userservice.service.resource.ResourceService;
 import io.github.sergeysenin.userservice.service.s3.S3Service;
@@ -36,6 +38,7 @@ public class AvatarService {
     private final ResourceValidator resourceValidator;
     private final AvatarFileNameGenerator avatarFileNameGenerator;
     private final AvatarProperties avatarProperties;
+    private final AvatarMapper avatarMapper;
 
     @Transactional
     public UploadAvatarResponse uploadAvatar(Long userId, MultipartFile file) {
@@ -46,14 +49,10 @@ public class AvatarService {
         String extension = resourceValidator.getValidatedExtension(file);
         byte[] originalBytes = readFileBytes(file, userId);
 
-        var oldAvatarPaths = extractAvatarPaths(user.getUserProfileAvatar());
+        var oldAvatarPaths = avatarMapper.toDto(user.getUserProfileAvatar());
         var newAvatarPaths = uploadResizedVersions(userId, originalBytes, extension);
 
-        user.updateAvatar(UserProfileAvatar.builder()
-                .originalPath(newAvatarPaths.originalPath())
-                .thumbnailPath(newAvatarPaths.thumbnailPath())
-                .profilePath(newAvatarPaths.profilePath())
-                .build());
+        applyAvatarToUser(user, newAvatarPaths);
 
         var savedUser = userService.save(user);
 
@@ -99,7 +98,7 @@ public class AvatarService {
                 "Попытка удалить отсутствующий аватар пользователя: userId={}"
         );
 
-        var removedPaths = extractAvatarPaths(avatar);
+        var removedPaths = avatarMapper.toDto(avatar);
 
         deleteAvatarObjects(removedPaths);
 
@@ -121,18 +120,6 @@ public class AvatarService {
         }
     }
 
-    private AvatarObjectPathsDto extractAvatarPaths(UserProfileAvatar avatar) {
-        if (avatar == null) {
-            return null;
-        }
-
-        return new AvatarObjectPathsDto(
-                avatar.getOriginalPath(),
-                avatar.getThumbnailPath(),
-                avatar.getProfilePath()
-        );
-    }
-
     private AvatarObjectPathsDto uploadResizedVersions(Long userId, byte[] originalBytes, String extension) {
         var newAvatarPaths = avatarFileNameGenerator.generateFilePaths(userId, extension);
 
@@ -142,11 +129,16 @@ public class AvatarService {
         byte[] thumbnailBytes = resourceService.resize(originalBytes, thumbnailMaxSide, extension);
         byte[] profileBytes = resourceService.resize(originalBytes, profileMaxSide, extension);
 
-        s3Service.storeObject(newAvatarPaths.originalPath(), originalBytes);
         s3Service.storeObject(newAvatarPaths.thumbnailPath(), thumbnailBytes);
         s3Service.storeObject(newAvatarPaths.profilePath(), profileBytes);
+        s3Service.storeObject(newAvatarPaths.originalPath(), originalBytes);
 
         return newAvatarPaths;
+    }
+
+    private void applyAvatarToUser(User user, AvatarObjectPathsDto newAvatarPaths) {
+        UserProfileAvatar avatar = avatarMapper.toEntity(newAvatarPaths);
+        user.updateAvatar(avatar);
     }
 
     private UserProfileAvatar ensureAvatarExists(UserProfileAvatar avatar, Long userId, String logMessage) {

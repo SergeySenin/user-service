@@ -7,7 +7,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Validated
 @ConfigurationProperties(prefix = "user.avatar")
@@ -21,21 +26,30 @@ public record AvatarProperties(
         List<String> allowedMimeTypes
 ) {
 
-    private static final List<String> DEFAULT_ALLOWED_MIME_TYPES = List.of("image/jpeg", "image/png", "image/webp");
+    public static final String DEFAULT_STORAGE_PATH = "avatars";
+    public static final String MIME_TYPE_JPEG = "image/jpeg";
+    public static final String MIME_TYPE_PNG = "image/png";
+    public static final String MIME_TYPE_WEBP = "image/webp";
+    public static final String[] DEFAULT_ALLOWED_MIME_TYPES_ARRAY = {
+            MIME_TYPE_JPEG,
+            MIME_TYPE_PNG,
+            MIME_TYPE_WEBP
+    };
+    public static final List<String> DEFAULT_ALLOWED_MIME_TYPES = List.of(DEFAULT_ALLOWED_MIME_TYPES_ARRAY);
 
     public AvatarProperties(
 
-            @DefaultValue("avatars")
+            @DefaultValue(DEFAULT_STORAGE_PATH)
             String storagePath,
 
             AvatarSizesProperties sizes,
 
-            @DefaultValue({"image/jpeg", "image/png", "image/webp"})
+            @DefaultValue({MIME_TYPE_JPEG, MIME_TYPE_PNG, MIME_TYPE_WEBP})
             List<String> allowedMimeTypes
     ) {
-        this.storagePath = storagePath;
+        this.storagePath = normalizeStoragePath(storagePath);
         this.sizes = sizes == null ? new AvatarSizesProperties(null, null) : sizes;
-        this.allowedMimeTypes = allowedMimeTypes == null ? DEFAULT_ALLOWED_MIME_TYPES : allowedMimeTypes;
+        this.allowedMimeTypes = normalizeAllowedMimeTypes(allowedMimeTypes);
     }
 
     public record AvatarSizesProperties(
@@ -63,5 +77,31 @@ public record AvatarProperties(
         public AvatarSizeProperties(int maxSide) {
             this.maxSide = maxSide;
         }
+    }
+
+    private static String normalizeStoragePath(String storagePath) {
+        if (storagePath == null) {
+            return DEFAULT_STORAGE_PATH;
+        }
+
+        String trimmed = storagePath.trim();
+        String withoutSlashes = trimmed.replaceAll("^/+|/+$", "");
+        return withoutSlashes.isEmpty() ? DEFAULT_STORAGE_PATH : withoutSlashes;
+    }
+
+    private static List<String> normalizeAllowedMimeTypes(List<String> allowedMimeTypes) {
+        List<String> initial = allowedMimeTypes == null ? DEFAULT_ALLOWED_MIME_TYPES : allowedMimeTypes;
+
+        Set<String> sanitized = initial.stream()
+                .filter(Objects::nonNull)
+                .map(mime -> mime.trim().toLowerCase(Locale.ROOT))
+                .filter(mime -> !mime.isEmpty())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        if (sanitized.isEmpty()) {
+            throw new IllegalArgumentException("Список допустимых MIME-типов аватара не может быть пустым");
+        }
+
+        return List.copyOf(sanitized);
     }
 }

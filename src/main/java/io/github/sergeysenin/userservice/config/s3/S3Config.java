@@ -2,6 +2,7 @@ package io.github.sergeysenin.userservice.config.s3;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.StringUtils;
 
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -24,9 +25,11 @@ public class S3Config {
 
     @Bean(destroyMethod = "close")
     public S3Client s3Client(S3Properties properties, S3Configuration configuration) {
+        Region region = resolveRegion(properties);
+
         return S3Client.builder()
                 .endpointOverride(URI.create(properties.endpoint()))
-                .region(Region.of(properties.region()))
+                .region(region)
                 .credentialsProvider(credentialsProvider(properties))
                 .serviceConfiguration(configuration)
                 .build();
@@ -34,9 +37,11 @@ public class S3Config {
 
     @Bean(destroyMethod = "close")
     public S3Presigner s3Presigner(S3Properties properties, S3Configuration configuration) {
+        Region region = resolveRegion(properties);
+
         return S3Presigner.builder()
                 .endpointOverride(URI.create(properties.endpoint()))
-                .region(Region.of(properties.region()))
+                .region(region)
                 .credentialsProvider(credentialsProvider(properties))
                 .serviceConfiguration(configuration)
                 .build();
@@ -45,5 +50,14 @@ public class S3Config {
     private StaticCredentialsProvider credentialsProvider(S3Properties properties) {
         AwsBasicCredentials credentials = AwsBasicCredentials.create(properties.accessKey(), properties.secretKey());
         return StaticCredentialsProvider.create(credentials);
+    }
+
+    private Region resolveRegion(S3Properties properties) {
+        String region = properties.region();
+        if (!StringUtils.hasText(region)) {
+            throw new IllegalStateException("Регион S3 не должен быть пустым");
+        }
+
+        return Region.of(region.trim());
     }
 }

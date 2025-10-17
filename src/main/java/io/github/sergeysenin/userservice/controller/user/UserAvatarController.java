@@ -54,7 +54,8 @@ public class UserAvatarController {
             @RequestParam("file")
             MultipartFile file
     ) {
-        log.info("Запрос на загрузку аватара: userId={}, fileName={}", userId, file.getOriginalFilename());
+        String fileName = file != null ? file.getOriginalFilename() : null;
+        log.info("Запрос на загрузку аватара: userId={}, fileName={}", userId, fileName);
         return avatarService.uploadAvatar(userId, file);
     }
 

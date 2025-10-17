@@ -64,13 +64,7 @@ public class ResourceValidator {
             throw new DataValidationException("Ожидался MIME-тип изображения");
         }
 
-        Set<String> allowedMimeTypes = avatarProperties.allowedMimeTypes() == null ?
-                Set.of() :
-                avatarProperties.allowedMimeTypes().stream()
-                .filter(Objects::nonNull)
-                .map(mime -> mime.trim().toLowerCase(Locale.ROOT))
-                .filter(mime -> !mime.isEmpty())
-                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+        Set<String> allowedMimeTypes = Set.copyOf(avatarProperties.allowedMimeTypes());
 
         if (allowedMimeTypes.isEmpty() || !allowedMimeTypes.contains(normalizedContentType)) {
             throw new DataValidationException("Недопустимый MIME-тип файла");

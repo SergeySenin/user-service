@@ -8,6 +8,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.Duration;
+import java.util.Locale;
 
 @Validated
 @ConfigurationProperties(prefix = "services.s3")
@@ -31,7 +32,7 @@ public record S3Properties(
         Duration urlExpiration
 ) {
 
-    private static final String DEFAULT_REGION = "us-east-1";
+    public static final String DEFAULT_REGION = "us-east-1";
 
     public S3Properties(
 
@@ -53,7 +54,20 @@ public record S3Properties(
         this.accessKey = accessKey;
         this.secretKey = secretKey;
         this.bucketName = bucketName;
-        this.region = region == null ? DEFAULT_REGION : region;
+        this.region = normalizeRegion(region);
         this.urlExpiration = urlExpiration;
+    }
+
+    private static String normalizeRegion(String region) {
+        if (region == null) {
+            return DEFAULT_REGION;
+        }
+
+        String trimmed = region.trim();
+        if (trimmed.isEmpty()) {
+            return DEFAULT_REGION;
+        }
+
+        return trimmed.toLowerCase(Locale.ROOT);
     }
 }
