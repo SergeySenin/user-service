@@ -21,11 +21,11 @@ spring:
 services:
   s3:
     endpoint: ${S3_ENDPOINT:?}
-    accessKey: ${S3_ACCESS_KEY:?}
-    secretKey: ${S3_SECRET_KEY:?}
-    bucketName: ${S3_BUCKET:?}
+    access-key: ${S3_ACCESS_KEY:?}
+    secret-key: ${S3_SECRET_KEY:?}
+    bucket-name: ${S3_BUCKET:?}
     region: ${S3_REGION:us-east-1}
-    urlExpiration: ${S3_URL_EXPIRATION:432000000}
+    url-expiration: ${S3_URL_EXPIRATION:PT120H}
 
 clients:
   project-service: ${PROJECT_SVC_URL:?}
