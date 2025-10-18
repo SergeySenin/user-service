@@ -185,7 +185,7 @@ tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     violationRules {
         rule {
             limit {
-                minimum = 0.0.toBigDecimal() // Временное решение (вернуть 0.8 при добавлении тестов)
+                minimum = 0.8.toBigDecimal()
             }
         }
     }
@@ -203,6 +203,7 @@ fun configureJacocoClassDirectories(jacocoTask: JacocoReportBase) {
                     "**/config/**",
                     "**/dto/**",
                     "**/entity/**",
+                    "**/exception/**",
                     "**/mapper/**",
                     "**/repository/**",
                     "**/com/json/**",
