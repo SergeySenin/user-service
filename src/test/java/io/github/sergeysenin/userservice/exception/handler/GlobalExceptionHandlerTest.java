@@ -12,11 +12,6 @@ import jakarta.validation.Path;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BeanPropertyBindingResult;
@@ -43,8 +38,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.STRICT_STUBS)
 @DisplayName("GlobalExceptionHandler")
 class GlobalExceptionHandlerTest {
 
@@ -61,7 +54,9 @@ class GlobalExceptionHandlerTest {
     private static final String BUSINESS_DETAIL_KEY = "userId";
     private static final String BUSINESS_DETAIL_VALUE = "42";
 
-    private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
+    private GlobalExceptionHandler createSut() {
+        return new GlobalExceptionHandler();
+    }
 
     @Nested
     @DisplayName("Валидационные исключения")
@@ -71,8 +66,9 @@ class GlobalExceptionHandlerTest {
         @DisplayName("должен вернуть ошибку валидации при MethodArgumentNotValidException")
         void shouldReturnValidationFailedResponseWhenMethodArgumentInvalid() throws NoSuchMethodException {
             MethodArgumentNotValidException exception = createMethodArgumentNotValidException();
+            GlobalExceptionHandler sut = createSut();
 
-            ResponseEntity<ErrorResponse> response = handler.handleMethodArgumentNotValid(exception);
+            ResponseEntity<ErrorResponse> response = sut.handleMethodArgumentNotValid(exception);
 
             Map<String, String> expectedDetails = new LinkedHashMap<>();
             expectedDetails.put(FIELD_NAME, FIELD_ERROR_MESSAGE);
@@ -91,8 +87,9 @@ class GlobalExceptionHandlerTest {
         @DisplayName("должен вернуть ошибку валидации при ConstraintViolationException")
         void shouldReturnValidationFailedResponseWhenConstraintViolationOccurs() {
             ConstraintViolationException exception = createConstraintViolationException();
+            GlobalExceptionHandler sut = createSut();
 
-            ResponseEntity<ErrorResponse> response = handler.handleConstraintViolation(exception);
+            ResponseEntity<ErrorResponse> response = sut.handleConstraintViolation(exception);
 
             Map<String, String> expectedDetails = new LinkedHashMap<>();
             expectedDetails.put(CONSTRAINT_PROPERTY, CONSTRAINT_MESSAGE);
@@ -111,8 +108,9 @@ class GlobalExceptionHandlerTest {
         @DisplayName("должен вернуть ошибку биндинга при BindException")
         void shouldReturnBindingErrorResponseWhenBindExceptionOccurs() {
             BindException exception = createBindException();
+            GlobalExceptionHandler sut = createSut();
 
-            ResponseEntity<ErrorResponse> response = handler.handleBindException(exception);
+            ResponseEntity<ErrorResponse> response = sut.handleBindException(exception);
 
             Map<String, String> expectedDetails = new LinkedHashMap<>();
             expectedDetails.put(FIELD_NAME, FIELD_ERROR_MESSAGE);
@@ -142,7 +140,9 @@ class GlobalExceptionHandlerTest {
                             DATABASE_CONSTRAINT
                     );
 
-            ResponseEntity<ErrorResponse> response = handler.handleDatabaseConstraintViolation(exception);
+            GlobalExceptionHandler sut = createSut();
+
+            ResponseEntity<ErrorResponse> response = sut.handleDatabaseConstraintViolation(exception);
 
             Map<String, String> expectedDetails = new LinkedHashMap<>();
             expectedDetails.put("constraint", DATABASE_CONSTRAINT);
@@ -165,8 +165,9 @@ class GlobalExceptionHandlerTest {
         @DisplayName("должен вернуть 404 при EntityNotFoundException")
         void shouldReturnNotFoundResponseWhenEntityNotFoundExceptionOccurs() {
             EntityNotFoundException exception = new EntityNotFoundException(ENTITY_ERROR_MESSAGE);
+            GlobalExceptionHandler sut = createSut();
 
-            ResponseEntity<ErrorResponse> response = handler.handleEntityNotFound(exception);
+            ResponseEntity<ErrorResponse> response = sut.handleEntityNotFound(exception);
 
             assertResponse(
                     response,
@@ -180,8 +181,9 @@ class GlobalExceptionHandlerTest {
         @DisplayName("должен вернуть 404 при NoSuchElementException")
         void shouldReturnNotFoundResponseWhenNoSuchElementExceptionOccurs() {
             NoSuchElementException exception = new NoSuchElementException(ENTITY_ERROR_MESSAGE);
+            GlobalExceptionHandler sut = createSut();
 
-            ResponseEntity<ErrorResponse> response = handler.handleNoSuchElement(exception);
+            ResponseEntity<ErrorResponse> response = sut.handleNoSuchElement(exception);
 
             assertResponse(
                     response,
@@ -202,8 +204,9 @@ class GlobalExceptionHandlerTest {
             Map<String, String> details = new LinkedHashMap<>();
             details.put(BUSINESS_DETAIL_KEY, BUSINESS_DETAIL_VALUE);
             TestServiceException exception = new TestServiceException(details);
+            GlobalExceptionHandler sut = createSut();
 
-            ResponseEntity<ErrorResponse> response = handler.handleBaseServiceException(exception);
+            ResponseEntity<ErrorResponse> response = sut.handleBaseServiceException(exception);
 
             assertResponse(
                     response,
@@ -223,8 +226,9 @@ class GlobalExceptionHandlerTest {
         @DisplayName("должен вернуть 500 при RuntimeException")
         void shouldReturnUnexpectedErrorWhenRuntimeExceptionOccurs() {
             RuntimeException exception = new RuntimeException("Ошибка выполнения");
+            GlobalExceptionHandler sut = createSut();
 
-            ResponseEntity<ErrorResponse> response = handler.handleRuntimeException(exception);
+            ResponseEntity<ErrorResponse> response = sut.handleRuntimeException(exception);
 
             assertResponse(
                     response,
@@ -238,8 +242,9 @@ class GlobalExceptionHandlerTest {
         @DisplayName("должен вернуть 500 при Exception")
         void shouldReturnUnexpectedErrorWhenExceptionOccurs() {
             Exception exception = new Exception("Неизвестная ошибка");
+            GlobalExceptionHandler sut = createSut();
 
-            ResponseEntity<ErrorResponse> response = handler.handleException(exception);
+            ResponseEntity<ErrorResponse> response = sut.handleException(exception);
 
             assertResponse(
                     response,

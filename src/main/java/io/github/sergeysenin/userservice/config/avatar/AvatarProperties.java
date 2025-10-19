@@ -30,12 +30,11 @@ public record AvatarProperties(
     public static final String MIME_TYPE_JPEG = "image/jpeg";
     public static final String MIME_TYPE_PNG = "image/png";
     public static final String MIME_TYPE_WEBP = "image/webp";
-    public static final String[] DEFAULT_ALLOWED_MIME_TYPES_ARRAY = {
+    public static final List<String> DEFAULT_ALLOWED_MIME_TYPES = List.of(
             MIME_TYPE_JPEG,
             MIME_TYPE_PNG,
             MIME_TYPE_WEBP
-    };
-    public static final List<String> DEFAULT_ALLOWED_MIME_TYPES = List.of(DEFAULT_ALLOWED_MIME_TYPES_ARRAY);
+    );
 
     public AvatarProperties(
 
