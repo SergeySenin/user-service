@@ -34,43 +34,43 @@ class BaseServiceExceptionTest {
         @Test
         @DisplayName("должен использовать сообщение по умолчанию, когда message равно null")
         void shouldUseDefaultMessageWhenMessageNull() {
-            BaseServiceException exception = createException(TEST_ERROR_CODE, null);
+            BaseServiceException sut = createSut(TEST_ERROR_CODE, null);
 
             assertAll("Сообщение должно заменяться на дефолтное",
                     () -> assertEquals(
                             TEST_ERROR_CODE.getDefaultMessage(),
-                            exception.getMessage(),
+                            sut.getMessage(),
                             "Сообщение должно совпадать с дефолтным значением"
                     ),
-                    () -> assertSame(TEST_ERROR_CODE, exception.getErrorCode(), "Должен сохраняться errorCode"));
+                    () -> assertSame(TEST_ERROR_CODE, sut.getErrorCode(), "Должен сохраняться errorCode"));
         }
 
         @Test
         @DisplayName("должен использовать сообщение по умолчанию, когда message содержит только пробелы")
         void shouldUseDefaultMessageWhenMessageBlank() {
-            BaseServiceException exception = createException(TEST_ERROR_CODE, "   ");
+            BaseServiceException sut = createSut(TEST_ERROR_CODE, "   ");
 
             assertAll("Сообщение должно заменяться на дефолтное",
                     () -> assertEquals(
                             TEST_ERROR_CODE.getDefaultMessage(),
-                            exception.getMessage(),
+                            sut.getMessage(),
                             "Сообщение должно совпадать с дефолтным значением"
                     ),
-                    () -> assertSame(TEST_ERROR_CODE, exception.getErrorCode(), "Должен сохраняться errorCode"));
+                    () -> assertSame(TEST_ERROR_CODE, sut.getErrorCode(), "Должен сохраняться errorCode"));
         }
 
         @Test
         @DisplayName("должен сохранять пользовательское сообщение, когда оно передано")
         void shouldStoreProvidedMessageWhenMessageNotBlank() {
-            BaseServiceException exception = createException(TEST_ERROR_CODE, CUSTOM_MESSAGE);
+            BaseServiceException sut = createSut(TEST_ERROR_CODE, CUSTOM_MESSAGE);
 
             assertAll("Сообщение должно совпадать с пользовательским",
                     () -> assertEquals(
                             CUSTOM_MESSAGE,
-                            exception.getMessage(),
+                            sut.getMessage(),
                             "Сообщение должно совпадать с переданным значением"
                     ),
-                    () -> assertSame(TEST_ERROR_CODE, exception.getErrorCode(), "Должен сохраняться errorCode"));
+                    () -> assertSame(TEST_ERROR_CODE, sut.getErrorCode(), "Должен сохраняться errorCode"));
         }
 
         @Test
@@ -78,15 +78,15 @@ class BaseServiceExceptionTest {
         void shouldPropagateCauseWhenProvided() {
             Throwable cause = new IllegalStateException("test cause");
 
-            BaseServiceException exception = createException(TEST_ERROR_CODE, CUSTOM_MESSAGE, cause);
+            BaseServiceException sut = createSut(TEST_ERROR_CODE, CUSTOM_MESSAGE, cause);
 
             assertAll("Причина должна сохраняться",
                     () -> assertEquals(
                             CUSTOM_MESSAGE,
-                            exception.getMessage(),
+                            sut.getMessage(),
                             "Сообщение должно совпадать с переданным значением"
                     ),
-                    () -> assertSame(cause, exception.getCause(), "Причина должна совпадать с переданной"));
+                    () -> assertSame(cause, sut.getCause(), "Причина должна совпадать с переданной"));
         }
     }
 
@@ -97,21 +97,21 @@ class BaseServiceExceptionTest {
         @Test
         @DisplayName("должен возвращать пустые детали, когда details равно null")
         void shouldReturnEmptyDetailsWhenDetailsNull() {
-            BaseServiceException exception = createExceptionWithDetails(TEST_ERROR_CODE, CUSTOM_MESSAGE, null);
+            BaseServiceException sut = createSutWithDetails(TEST_ERROR_CODE, CUSTOM_MESSAGE, null);
 
             assertAll("Детали должны быть пустыми",
-                    () -> assertNotNull(exception.getDetails(), "Коллекция деталей не должна быть null"),
-                    () -> assertTrue(exception.getDetails().isEmpty(), "Детали должны быть пустыми"));
+                    () -> assertNotNull(sut.getDetails(), "Коллекция деталей не должна быть null"),
+                    () -> assertTrue(sut.getDetails().isEmpty(), "Детали должны быть пустыми"));
         }
 
         @Test
         @DisplayName("должен возвращать пустые детали, когда details пуст")
         void shouldReturnEmptyDetailsWhenDetailsEmpty() {
-            BaseServiceException exception = createExceptionWithDetails(TEST_ERROR_CODE, CUSTOM_MESSAGE, Map.of());
+            BaseServiceException sut = createSutWithDetails(TEST_ERROR_CODE, CUSTOM_MESSAGE, Map.of());
 
             assertAll("Детали должны быть пустыми",
-                    () -> assertNotNull(exception.getDetails(), "Коллекция деталей не должна быть null"),
-                    () -> assertTrue(exception.getDetails().isEmpty(), "Детали должны быть пустыми"));
+                    () -> assertNotNull(sut.getDetails(), "Коллекция деталей не должна быть null"),
+                    () -> assertTrue(sut.getDetails().isEmpty(), "Детали должны быть пустыми"));
         }
 
         @Test
@@ -119,28 +119,24 @@ class BaseServiceExceptionTest {
         void shouldCreateImmutableCopyWhenDetailsProvided() {
             Map<String, String> originalDetails = createDetails();
 
-            BaseServiceException exception = createExceptionWithDetails(
-                    TEST_ERROR_CODE,
-                    CUSTOM_MESSAGE,
-                    originalDetails
-            );
+            BaseServiceException sut = createSutWithDetails(TEST_ERROR_CODE, CUSTOM_MESSAGE, originalDetails);
 
             originalDetails.put("another", "value");
 
             assertAll("Детали должны копироваться и быть неизменяемыми",
                     () -> assertEquals(
                             1,
-                            exception.getDetails().size(),
+                            sut.getDetails().size(),
                             "Размер деталей не должен измениться после модификации исходной карты"
                     ),
                     () -> assertEquals(
                             DETAILS_VALUE,
-                            exception.getDetails().get(DETAILS_KEY),
+                            sut.getDetails().get(DETAILS_KEY),
                             "Значение должно соответствовать исходному"
                     ),
                     () -> assertThrows(
                             UnsupportedOperationException.class,
-                            () -> exception.getDetails().put("new", "value"),
+                            () -> sut.getDetails().put("new", "value"),
                             "Коллекция деталей должна быть неизменяемой"
                     ));
         }
@@ -153,7 +149,7 @@ class BaseServiceExceptionTest {
 
             NullPointerException exception = assertThrows(
                     NullPointerException.class,
-                    () -> createExceptionWithDetails(TEST_ERROR_CODE, CUSTOM_MESSAGE, detailsWithNullKey),
+                    () -> createSutWithDetails(TEST_ERROR_CODE, CUSTOM_MESSAGE, detailsWithNullKey),
                     "Ожидается NullPointerException при наличии null-ключа"
             );
 
@@ -172,7 +168,7 @@ class BaseServiceExceptionTest {
 
             NullPointerException exception = assertThrows(
                     NullPointerException.class,
-                    () -> createExceptionWithDetails(TEST_ERROR_CODE, CUSTOM_MESSAGE, detailsWithNullValue),
+                    () -> createSutWithDetails(TEST_ERROR_CODE, CUSTOM_MESSAGE, detailsWithNullValue),
                     "Ожидается NullPointerException при наличии null-значения"
             );
 
@@ -193,7 +189,7 @@ class BaseServiceExceptionTest {
         void shouldThrowNullPointerExceptionWhenErrorCodeIsNull() {
             NullPointerException exception = assertThrows(
                     NullPointerException.class,
-                    () -> createException(null, CUSTOM_MESSAGE),
+                    () -> createSut(null, CUSTOM_MESSAGE),
                     "Ожидается NullPointerException при отсутствии errorCode"
             );
 
@@ -213,13 +209,13 @@ class BaseServiceExceptionTest {
         @DisplayName("должен создавать ErrorResponse с актуальными данными")
         void shouldBuildErrorResponseWithCurrentState() {
             Map<String, String> details = createDetails();
-            BaseServiceException exception = createExceptionWithDetails(
+            BaseServiceException sut = createSutWithDetails(
                     TEST_ERROR_CODE,
                     CUSTOM_MESSAGE,
                     details
             );
 
-            ErrorResponse response = exception.toErrorResponse();
+            ErrorResponse response = sut.toErrorResponse();
 
             assertAll("ErrorResponse должен содержать корректные данные",
                     () -> assertEquals(
@@ -252,15 +248,15 @@ class BaseServiceExceptionTest {
         return details;
     }
 
-    private BaseServiceException createException(ErrorCode errorCode, String message) {
+    private BaseServiceException createSut(ErrorCode errorCode, String message) {
         return new TestServiceException(errorCode, message);
     }
 
-    private BaseServiceException createException(ErrorCode errorCode, String message, Throwable cause) {
+    private BaseServiceException createSut(ErrorCode errorCode, String message, Throwable cause) {
         return new TestServiceException(errorCode, message, null, cause);
     }
 
-    private BaseServiceException createExceptionWithDetails(
+    private BaseServiceException createSutWithDetails(
             ErrorCode errorCode,
             String message,
             Map<String, String> details

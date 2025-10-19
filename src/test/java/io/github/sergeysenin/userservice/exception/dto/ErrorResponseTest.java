@@ -34,20 +34,15 @@ class ErrorResponseTest {
         void shouldCreateImmutableCopyWhenDetailsProvided() {
             Map<String, String> sourceDetails = createDetails();
 
-            ErrorResponse response = new ErrorResponse(
-                    VALID_CODE,
-                    CUSTOM_MESSAGE,
-                    Instant.now(),
-                    sourceDetails
-            );
+            ErrorResponse sut = createSut(VALID_CODE, CUSTOM_MESSAGE, Instant.now(), sourceDetails);
 
             sourceDetails.put("other", "value");
 
             assertAll("Проверка неизменности деталей",
-                    () -> assertEquals(Map.of(DETAILS_KEY, DETAILS_VALUE), response.details(),
+                    () -> assertEquals(Map.of(DETAILS_KEY, DETAILS_VALUE), sut.details(),
                             "Детали должны копироваться при создании ответа"),
                     () -> assertThrows(UnsupportedOperationException.class,
-                            () -> response.details().put("extra", "value"),
+                            () -> sut.details().put("extra", "value"),
                             "Коллекция деталей должна быть неизменяемой"));
         }
 
@@ -56,17 +51,12 @@ class ErrorResponseTest {
         void shouldUseProvidedTimestampWhenNotNull() {
             Instant expectedTimestamp = Instant.parse("2025-01-01T10:15:30Z");
 
-            ErrorResponse response = new ErrorResponse(
-                    VALID_CODE,
-                    CUSTOM_MESSAGE,
-                    expectedTimestamp,
-                    createDetails()
-            );
+            ErrorResponse sut = createSut(VALID_CODE, CUSTOM_MESSAGE, expectedTimestamp, createDetails());
 
             assertAll("Проверка переданного timestamp",
-                    () -> assertEquals(expectedTimestamp, response.timestamp(),
+                    () -> assertEquals(expectedTimestamp, sut.timestamp(),
                             "Переданный timestamp должен сохраниться без изменений"),
-                    () -> assertEquals(Map.of(DETAILS_KEY, DETAILS_VALUE), response.details(),
+                    () -> assertEquals(Map.of(DETAILS_KEY, DETAILS_VALUE), sut.details(),
                             "Детали должны соответствовать исходным значениям"));
         }
 
@@ -75,17 +65,12 @@ class ErrorResponseTest {
         void shouldSetCurrentTimestampWhenTimestampIsNull() {
             Instant lowerBound = Instant.now();
 
-            ErrorResponse response = new ErrorResponse(
-                    VALID_CODE,
-                    CUSTOM_MESSAGE,
-                    null,
-                    createDetails()
-            );
+            ErrorResponse sut = createSut(VALID_CODE, CUSTOM_MESSAGE, null, createDetails());
 
             Instant upperBound = Instant.now();
 
             assertResponse(
-                    response,
+                    sut,
                     VALID_CODE,
                     CUSTOM_MESSAGE,
                     lowerBound,
@@ -97,35 +82,27 @@ class ErrorResponseTest {
         @Test
         @DisplayName("должен возвращать пустые детали, если переданы null")
         void shouldReturnEmptyDetailsWhenDetailsNull() {
-            ErrorResponse response = new ErrorResponse(
-                    VALID_CODE,
-                    CUSTOM_MESSAGE,
-                    Instant.now(),
-                    null
-            );
+            ErrorResponse sut = createSut(VALID_CODE, CUSTOM_MESSAGE, Instant.now(), null);
 
-            assertTrue(response.details().isEmpty(),
-                    "Детали должны быть пустыми при передаче null");
-            assertThrows(UnsupportedOperationException.class,
-                    () -> response.details().put(DETAILS_KEY, DETAILS_VALUE),
-                    "Пустая коллекция деталей должна быть неизменяемой");
+            assertAll("Проверка пустых деталей при null",
+                    () -> assertTrue(sut.details().isEmpty(),
+                            "Детали должны быть пустыми при передаче null"),
+                    () -> assertThrows(UnsupportedOperationException.class,
+                            () -> sut.details().put(DETAILS_KEY, DETAILS_VALUE),
+                            "Пустая коллекция деталей должна быть неизменяемой"));
         }
 
         @Test
         @DisplayName("должен возвращать пустые детали, если передана пустая коллекция")
         void shouldReturnEmptyDetailsWhenDetailsEmpty() {
-            ErrorResponse response = new ErrorResponse(
-                    VALID_CODE,
-                    CUSTOM_MESSAGE,
-                    Instant.now(),
-                    Map.of()
-            );
+            ErrorResponse sut = createSut(VALID_CODE, CUSTOM_MESSAGE, Instant.now(), Map.of());
 
-            assertTrue(response.details().isEmpty(),
-                    "Детали должны быть пустыми при передаче пустой коллекции");
-            assertThrows(UnsupportedOperationException.class,
-                    () -> response.details().put(DETAILS_KEY, DETAILS_VALUE),
-                    "Пустая коллекция деталей должна быть неизменяемой");
+            assertAll("Проверка пустых деталей при пустой коллекции",
+                    () -> assertTrue(sut.details().isEmpty(),
+                            "Детали должны быть пустыми при передаче пустой коллекции"),
+                    () -> assertThrows(UnsupportedOperationException.class,
+                            () -> sut.details().put(DETAILS_KEY, DETAILS_VALUE),
+                            "Пустая коллекция деталей должна быть неизменяемой"));
         }
     }
 
@@ -137,12 +114,7 @@ class ErrorResponseTest {
         @DisplayName("должен выбрасывать NullPointerException, если код равен null")
         void shouldThrowNullPointerExceptionWhenCodeIsNull() {
             assertThrows(NullPointerException.class,
-                    () -> new ErrorResponse(
-                            null,
-                            CUSTOM_MESSAGE,
-                            Instant.now(),
-                            createDetails()
-                    ),
+                    () -> new ErrorResponse(null, CUSTOM_MESSAGE, Instant.now(), createDetails()),
                     "Конструктор должен проверять код на null");
         }
 
@@ -150,12 +122,7 @@ class ErrorResponseTest {
         @DisplayName("должен выбрасывать NullPointerException, если сообщение равно null")
         void shouldThrowNullPointerExceptionWhenMessageIsNull() {
             assertThrows(NullPointerException.class,
-                    () -> new ErrorResponse(
-                            VALID_CODE,
-                            null,
-                            Instant.now(),
-                            createDetails()
-                    ),
+                    () -> new ErrorResponse(VALID_CODE, null, Instant.now(), createDetails()),
                     "Конструктор должен проверять сообщение на null");
         }
     }
@@ -171,16 +138,12 @@ class ErrorResponseTest {
         void shouldBuildResponseWithProvidedMessageWhenMessageNotBlank() {
             Instant lowerBound = Instant.now();
 
-            ErrorResponse response = ErrorResponse.of(
-                    TEST_ERROR_CODE,
-                    CUSTOM_MESSAGE,
-                    createDetails()
-            );
+            ErrorResponse sut = createSutFromFactory(TEST_ERROR_CODE, CUSTOM_MESSAGE, createDetails());
 
             Instant upperBound = Instant.now();
 
             assertResponse(
-                    response,
+                    sut,
                     TEST_ERROR_CODE.getCode(),
                     CUSTOM_MESSAGE,
                     lowerBound,
@@ -194,16 +157,12 @@ class ErrorResponseTest {
         void shouldUseDefaultMessageWhenMessageIsNull() {
             Instant lowerBound = Instant.now();
 
-            ErrorResponse response = ErrorResponse.of(
-                    TEST_ERROR_CODE,
-                    null,
-                    createDetails()
-            );
+            ErrorResponse sut = createSutFromFactory(TEST_ERROR_CODE, null, createDetails());
 
             Instant upperBound = Instant.now();
 
             assertResponse(
-                    response,
+                    sut,
                     TEST_ERROR_CODE.getCode(),
                     TEST_ERROR_CODE.getDefaultMessage(),
                     lowerBound,
@@ -217,16 +176,12 @@ class ErrorResponseTest {
         void shouldUseDefaultMessageWhenMessageIsBlank() {
             Instant lowerBound = Instant.now();
 
-            ErrorResponse response = ErrorResponse.of(
-                    TEST_ERROR_CODE,
-                    BLANK_MESSAGE,
-                    createDetails()
-            );
+            ErrorResponse sut = createSutFromFactory(TEST_ERROR_CODE, BLANK_MESSAGE, createDetails());
 
             Instant upperBound = Instant.now();
 
             assertResponse(
-                    response,
+                    sut,
                     TEST_ERROR_CODE.getCode(),
                     TEST_ERROR_CODE.getDefaultMessage(),
                     lowerBound,
@@ -238,28 +193,21 @@ class ErrorResponseTest {
         @Test
         @DisplayName("должен возвращать пустые детали, если аргумент details равен null")
         void shouldReturnEmptyDetailsWhenDetailsArgumentIsNull() {
-            ErrorResponse response = ErrorResponse.of(
-                    TEST_ERROR_CODE,
-                    CUSTOM_MESSAGE,
-                    null
-            );
+            ErrorResponse sut = createSutFromFactory(TEST_ERROR_CODE, CUSTOM_MESSAGE, null);
 
-            assertTrue(response.details().isEmpty(),
-                    "Детали должны быть пустыми при передаче null в фабричный метод");
-            assertThrows(UnsupportedOperationException.class,
-                    () -> response.details().put(DETAILS_KEY, DETAILS_VALUE),
-                    "Пустая коллекция деталей должна быть неизменяемой");
+            assertAll("Проверка пустых деталей в фабричном методе",
+                    () -> assertTrue(sut.details().isEmpty(),
+                            "Детали должны быть пустыми при передаче null в фабричный метод"),
+                    () -> assertThrows(UnsupportedOperationException.class,
+                            () -> sut.details().put(DETAILS_KEY, DETAILS_VALUE),
+                            "Пустая коллекция деталей должна быть неизменяемой"));
         }
 
         @Test
         @DisplayName("должен выбрасывать NullPointerException, если errorCode равен null")
         void shouldThrowNullPointerExceptionWhenErrorCodeIsNull() {
             assertThrows(NullPointerException.class,
-                    () -> ErrorResponse.of(
-                            null,
-                            CUSTOM_MESSAGE,
-                            createDetails()
-                    ),
+                    () -> createSutFromFactory(null, CUSTOM_MESSAGE, createDetails()),
                     "Фабричный метод должен проверять errorCode на null");
         }
     }
@@ -268,6 +216,14 @@ class ErrorResponseTest {
         Map<String, String> mutableDetails = new HashMap<>();
         mutableDetails.put(DETAILS_KEY, DETAILS_VALUE);
         return mutableDetails;
+    }
+
+    private ErrorResponse createSut(String code, String message, Instant timestamp, Map<String, String> details) {
+        return new ErrorResponse(code, message, timestamp, details);
+    }
+
+    private ErrorResponse createSutFromFactory(ErrorCode errorCode, String message, Map<String, String> details) {
+        return ErrorResponse.of(errorCode, message, details);
     }
 
     private void assertResponse(

@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -25,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.Mockito.only;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,9 +46,6 @@ class AvatarFileNameGeneratorTest {
     @Mock
     private AvatarProperties avatarProperties;
 
-    @InjectMocks
-    private AvatarFileNameGenerator avatarFileNameGenerator;
-
     @Nested
     @DisplayName("Метод generateFilePaths")
     class GenerateFilePathsTests {
@@ -57,39 +54,28 @@ class AvatarFileNameGeneratorTest {
         @DisplayName("должен формировать корректные пути ко всем версиям аватара при валидных данных")
         void shouldGenerateExpectedPathsWhenInputIsValid() {
             when(avatarProperties.storagePath()).thenReturn(STORAGE_PATH);
+            AvatarFileNameGenerator sut = createSut();
 
             AvatarObjectPathsDto result;
             try (MockedStatic<UUID> mockedUuid = Mockito.mockStatic(UUID.class)) {
                 mockedUuid.when(UUID::randomUUID).thenReturn(FIRST_GENERATED_UUID);
 
-                result = avatarFileNameGenerator.generateFilePaths(USER_ID, FILE_EXTENSION);
+                result = sut.generateFilePaths(USER_ID, FILE_EXTENSION);
             }
 
             assertAll("Все версии аватара должны иметь корректные пути",
                     () -> assertEquals(
-                            buildExpectedPath(
-                                    FIRST_GENERATED_UUID_VALUE,
-                                    EXPECTED_ORIGINAL_VERSION,
-                                    FILE_EXTENSION
-                            ),
+                            buildExpectedPath(FIRST_GENERATED_UUID_VALUE, EXPECTED_ORIGINAL_VERSION, FILE_EXTENSION),
                             result.originalPath(),
                             "Путь к оригинальной версии должен формироваться корректно"
                     ),
                     () -> assertEquals(
-                            buildExpectedPath(
-                                    FIRST_GENERATED_UUID_VALUE,
-                                    EXPECTED_THUMBNAIL_VERSION,
-                                    FILE_EXTENSION
-                            ),
+                            buildExpectedPath(FIRST_GENERATED_UUID_VALUE, EXPECTED_THUMBNAIL_VERSION, FILE_EXTENSION),
                             result.thumbnailPath(),
                             "Путь к миниатюре должен формироваться корректно"
                     ),
                     () -> assertEquals(
-                            buildExpectedPath(
-                                    FIRST_GENERATED_UUID_VALUE,
-                                    EXPECTED_PROFILE_VERSION,
-                                    FILE_EXTENSION
-                            ),
+                            buildExpectedPath(FIRST_GENERATED_UUID_VALUE, EXPECTED_PROFILE_VERSION, FILE_EXTENSION),
                             result.profilePath(),
                             "Путь к профайл-версии должен формироваться корректно"
                     ));
@@ -106,6 +92,7 @@ class AvatarFileNameGeneratorTest {
         @DisplayName("должен генерировать различные UUID при последовательных вызовах")
         void shouldGenerateDistinctUuidWhenInvokedSequentially() {
             when(avatarProperties.storagePath()).thenReturn(STORAGE_PATH);
+            AvatarFileNameGenerator sut = createSut();
 
             AvatarObjectPathsDto firstResult;
             AvatarObjectPathsDto secondResult;
@@ -115,47 +102,38 @@ class AvatarFileNameGeneratorTest {
                         .when(UUID::randomUUID)
                         .thenReturn(FIRST_GENERATED_UUID, SECOND_GENERATED_UUID);
 
-                firstResult = avatarFileNameGenerator.generateFilePaths(USER_ID, FILE_EXTENSION);
-                secondResult = avatarFileNameGenerator.generateFilePaths(USER_ID, FILE_EXTENSION);
+                firstResult = sut.generateFilePaths(USER_ID, FILE_EXTENSION);
+                secondResult = sut.generateFilePaths(USER_ID, FILE_EXTENSION);
             }
 
             assertAll("Каждый вызов должен использовать собственный UUID",
                     () -> assertEquals(
-                            buildExpectedPath(
-                                    FIRST_GENERATED_UUID_VALUE,
-                                    EXPECTED_ORIGINAL_VERSION,
-                                    FILE_EXTENSION
-                            ),
+                            buildExpectedPath(FIRST_GENERATED_UUID_VALUE, EXPECTED_ORIGINAL_VERSION, FILE_EXTENSION),
                             firstResult.originalPath(),
                             "Первый вызов должен использовать первый сгенерированный UUID"
                     ),
                     () -> assertEquals(
-                            buildExpectedPath(
-                                    SECOND_GENERATED_UUID_VALUE,
-                                    EXPECTED_ORIGINAL_VERSION,
-                                    FILE_EXTENSION
-                            ),
+                            buildExpectedPath(SECOND_GENERATED_UUID_VALUE, EXPECTED_ORIGINAL_VERSION, FILE_EXTENSION),
                             secondResult.originalPath(),
                             "Второй вызов должен использовать второй сгенерированный UUID"
                     ),
-                    () -> assertNotEquals(
-                            firstResult.originalPath(),
-                            secondResult.originalPath(),
+                    () -> assertNotEquals(firstResult.originalPath(), secondResult.originalPath(),
                             "Пути оригинальной версии должны отличаться при разных UUID"
                     ),
-                    () -> assertNotEquals(
-                            firstResult.thumbnailPath(),
-                            secondResult.thumbnailPath(),
+                    () -> assertNotEquals(firstResult.thumbnailPath(), secondResult.thumbnailPath(),
                             "Пути миниатюр должны отличаться при разных UUID"
                     ),
-                    () -> assertNotEquals(
-                            firstResult.profilePath(),
-                            secondResult.profilePath(),
+                    () -> assertNotEquals(firstResult.profilePath(), secondResult.profilePath(),
                             "Пути профайл-версии должны отличаться при разных UUID"
                     ));
 
             verify(avatarProperties, times(2)).storagePath();
+            verifyNoMoreInteractions(avatarProperties);
         }
+    }
+
+    private AvatarFileNameGenerator createSut() {
+        return new AvatarFileNameGenerator(avatarProperties);
     }
 
     private String buildExpectedPath(String uuidValue, String version, String fileExtension) {
