@@ -73,7 +73,7 @@ class GlobalExceptionHandlerTest {
         @DisplayName("должен вернуть ошибку валидации при MethodArgumentNotValidException")
         void shouldReturnValidationFailedResponseWhenMethodArgumentInvalid() throws NoSuchMethodException {
             MethodArgumentNotValidException exception = createMethodArgumentNotValidException();
-            GlobalExceptionHandler sut = createSut();
+            var sut = createSut();
             Instant lowerTimestampBound = Instant.now();
 
             ResponseEntity<ErrorResponse> response = sut.handleMethodArgumentNotValid(exception);
@@ -109,7 +109,7 @@ class GlobalExceptionHandlerTest {
             );
             Set<ConstraintViolation<?>> violations = orderedViolations(messageViolation, templateViolation);
             ConstraintViolationException exception = new OrderedConstraintViolationException(violations);
-            GlobalExceptionHandler sut = createSut();
+            var sut = createSut();
             Instant lowerTimestampBound = Instant.now();
 
             ResponseEntity<ErrorResponse> response = sut.handleConstraintViolation(exception);
@@ -163,7 +163,7 @@ class GlobalExceptionHandlerTest {
             BindingResult bindingResult = new BeanPropertyBindingResult(new SampleRequest(), OBJECT_NAME);
             bindingResult.addError(new ObjectError(OBJECT_NAME, new String[] {null}, null, null));
             BindException exception = new BindException(bindingResult);
-            GlobalExceptionHandler sut = createSut();
+            var sut = createSut();
             Instant lowerTimestampBound = Instant.now();
 
             ResponseEntity<ErrorResponse> response = sut.handleBindException(exception);
@@ -197,7 +197,7 @@ class GlobalExceptionHandlerTest {
             );
             Set<ConstraintViolation<?>> violations = orderedViolations(firstViolation, secondViolation);
             ConstraintViolationException exception = new OrderedConstraintViolationException(violations);
-            GlobalExceptionHandler sut = createSut();
+            var sut = createSut();
             Instant lowerTimestampBound = Instant.now();
 
             ResponseEntity<ErrorResponse> response = sut.handleConstraintViolation(exception);
@@ -233,7 +233,7 @@ class GlobalExceptionHandlerTest {
                             DATABASE_CONSTRAINT
                     );
 
-            GlobalExceptionHandler sut = createSut();
+            var sut = createSut();
             Instant lowerTimestampBound = Instant.now();
 
             ResponseEntity<ErrorResponse> response = sut.handleDatabaseConstraintViolation(exception);
@@ -263,7 +263,7 @@ class GlobalExceptionHandlerTest {
                             "   "
                     );
 
-            GlobalExceptionHandler sut = createSut();
+            var sut = createSut();
             Instant lowerTimestampBound = Instant.now();
 
             ResponseEntity<ErrorResponse> response = sut.handleDatabaseConstraintViolation(exception);
@@ -289,7 +289,7 @@ class GlobalExceptionHandlerTest {
         @DisplayName("должен вернуть 404 при EntityNotFoundException")
         void shouldReturnNotFoundResponseWhenEntityNotFoundExceptionOccurs() {
             EntityNotFoundException exception = new EntityNotFoundException(ENTITY_ERROR_MESSAGE);
-            GlobalExceptionHandler sut = createSut();
+            var sut = createSut();
             Instant lowerTimestampBound = Instant.now();
 
             ResponseEntity<ErrorResponse> response = sut.handleEntityNotFound(exception);
@@ -309,7 +309,7 @@ class GlobalExceptionHandlerTest {
         @DisplayName("должен вернуть 404 при NoSuchElementException")
         void shouldReturnNotFoundResponseWhenNoSuchElementExceptionOccurs() {
             NoSuchElementException exception = new NoSuchElementException(ENTITY_ERROR_MESSAGE);
-            GlobalExceptionHandler sut = createSut();
+            var sut = createSut();
             Instant lowerTimestampBound = Instant.now();
 
             ResponseEntity<ErrorResponse> response = sut.handleNoSuchElement(exception);
@@ -336,7 +336,7 @@ class GlobalExceptionHandlerTest {
             Map<String, String> details = new LinkedHashMap<>();
             details.put(BUSINESS_DETAIL_KEY, BUSINESS_DETAIL_VALUE);
             TestServiceException exception = new TestServiceException(details);
-            GlobalExceptionHandler sut = createSut();
+            var sut = createSut();
             Instant lowerTimestampBound = Instant.now();
 
             ResponseEntity<ErrorResponse> response = sut.handleBaseServiceException(exception);
@@ -362,7 +362,7 @@ class GlobalExceptionHandlerTest {
         @DisplayName("должен вернуть 500 при RuntimeException")
         void shouldReturnUnexpectedErrorWhenRuntimeExceptionOccurs() {
             RuntimeException exception = new RuntimeException("Ошибка выполнения");
-            GlobalExceptionHandler sut = createSut();
+            var sut = createSut();
             Instant lowerTimestampBound = Instant.now();
 
             ResponseEntity<ErrorResponse> response = sut.handleRuntimeException(exception);
@@ -382,7 +382,7 @@ class GlobalExceptionHandlerTest {
         @DisplayName("должен вернуть 500 при Exception")
         void shouldReturnUnexpectedErrorWhenExceptionOccurs() {
             Exception exception = new Exception("Неизвестная ошибка");
-            GlobalExceptionHandler sut = createSut();
+            var sut = createSut();
             Instant lowerTimestampBound = Instant.now();
 
             ResponseEntity<ErrorResponse> response = sut.handleException(exception);

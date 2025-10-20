@@ -54,7 +54,7 @@ class AvatarFileNameGeneratorTest {
         @DisplayName("должен формировать корректные пути ко всем версиям аватара при валидных данных")
         void shouldGenerateExpectedPathsWhenInputIsValid() {
             when(avatarProperties.storagePath()).thenReturn(STORAGE_PATH);
-            AvatarFileNameGenerator sut = createSut();
+            var sut = createSut();
 
             AvatarObjectPathsDto result;
             try (MockedStatic<UUID> mockedUuid = Mockito.mockStatic(UUID.class)) {
@@ -94,7 +94,7 @@ class AvatarFileNameGeneratorTest {
         @DisplayName("должен генерировать различные UUID при последовательных вызовах")
         void shouldGenerateDistinctUuidWhenInvokedSequentially() {
             when(avatarProperties.storagePath()).thenReturn(STORAGE_PATH);
-            AvatarFileNameGenerator sut = createSut();
+            var sut = createSut();
 
             AvatarObjectPathsDto firstResult;
             AvatarObjectPathsDto secondResult;

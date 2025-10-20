@@ -72,7 +72,7 @@ class UserServiceTest {
                     .withExperience(DEFAULT_EXPERIENCE)
                     .build();
             when(userRepository.findById(EXISTING_USER_ID)).thenReturn(Optional.of(expectedUser));
-            UserService sut = createSut();
+            var sut = createSut();
 
             User actualUser = sut.getUserByIdOrThrow(EXISTING_USER_ID);
 
@@ -85,7 +85,7 @@ class UserServiceTest {
         @DisplayName("должен бросить исключение когда пользователь отсутствует")
         void shouldThrowUserNotFoundExceptionWhenUserAbsent() {
             when(userRepository.findById(MISSING_USER_ID)).thenReturn(Optional.empty());
-            UserService sut = createSut();
+            var sut = createSut();
 
             UserNotFoundException exception = assertThrows(UserNotFoundException.class,
                     () -> sut.getUserByIdOrThrow(MISSING_USER_ID),
@@ -128,7 +128,7 @@ class UserServiceTest {
                     .withExperience(NEW_USER_EXPERIENCE)
                     .build();
             when(userRepository.save(userToSave)).thenReturn(savedUser);
-            UserService sut = createSut();
+            var sut = createSut();
 
             User actualUser = sut.save(userToSave);
 

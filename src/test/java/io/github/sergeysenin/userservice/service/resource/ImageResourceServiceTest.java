@@ -120,7 +120,7 @@ class ImageResourceServiceTest {
         @Test
         @DisplayName("должен бросать AvatarUploadException, когда Thumbnailator выбрасывает RuntimeException")
         void shouldThrowAvatarUploadExceptionWhenThumbnailatorThrowsRuntimeException() {
-            final var sut = createSut();
+            var sut = createSut();
             final var runtimeException = new IllegalStateException("builder failed");
 
             try (MockedStatic<Thumbnails> thumbnails = Mockito.mockStatic(Thumbnails.class)) {

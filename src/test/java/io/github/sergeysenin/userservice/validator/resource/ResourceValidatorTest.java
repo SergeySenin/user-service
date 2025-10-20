@@ -66,9 +66,11 @@ class ResourceValidatorTest {
         @Test
         @DisplayName("должен бросать исключение, когда файл не передан")
         void shouldThrowFileNotFoundWhenFileIsNull() {
+            var sut = createSut();
+
             DataValidationException exception = assertThrows(
                     DataValidationException.class,
-                    () -> createSut().getValidatedExtension(null),
+                    () -> sut.getValidatedExtension(null),
                     "Ожидалось исключение, если файл отсутствует"
             );
 
@@ -90,7 +92,7 @@ class ResourceValidatorTest {
             )
                     .withSize(0L)
                     .build();
-            ResourceValidator sut = createSut();
+            var sut = createSut();
 
             DataValidationException exception = assertThrows(
                     DataValidationException.class,
@@ -121,7 +123,7 @@ class ResourceValidatorTest {
             )
                     .withOriginalFilename(null)
                     .build();
-            ResourceValidator sut = createSut();
+            var sut = createSut();
 
             DataValidationException exception = assertThrows(
                     DataValidationException.class,
@@ -149,7 +151,7 @@ class ResourceValidatorTest {
                     .withContentType(AvatarProperties.MIME_TYPE_JPEG)
                     .build();
             mockAllowedMimeTypes(avatarProperties, DEFAULT_ALLOWED_MIME_TYPES);
-            ResourceValidator sut = createSut();
+            var sut = createSut();
 
             DataValidationException exception = assertThrows(
                     DataValidationException.class,
@@ -180,7 +182,7 @@ class ResourceValidatorTest {
             )
                     .withContentType("   ")
                     .build();
-            ResourceValidator sut = createSut();
+            var sut = createSut();
 
             DataValidationException exception = assertThrows(
                     DataValidationException.class,
@@ -206,7 +208,7 @@ class ResourceValidatorTest {
             )
                     .withContentType("image/")
                     .build();
-            ResourceValidator sut = createSut();
+            var sut = createSut();
 
             DataValidationException exception = assertThrows(
                     DataValidationException.class,
@@ -232,7 +234,7 @@ class ResourceValidatorTest {
             )
                     .withContentType("application/pdf")
                     .build();
-            ResourceValidator sut = createSut();
+            var sut = createSut();
 
             DataValidationException exception = assertThrows(
                     DataValidationException.class,
@@ -260,7 +262,7 @@ class ResourceValidatorTest {
                     .withContentType("image/tiff")
                     .build();
             mockAllowedMimeTypes(avatarProperties, DEFAULT_ALLOWED_MIME_TYPES);
-            ResourceValidator sut = createSut();
+            var sut = createSut();
 
             DataValidationException exception = assertThrows(
                     DataValidationException.class,
@@ -289,7 +291,7 @@ class ResourceValidatorTest {
                 .withContentType(AvatarProperties.MIME_TYPE_PNG)
                 .build();
         mockAllowedMimeTypes(avatarProperties, List.of());
-        ResourceValidator sut = createSut();
+        var sut = createSut();
 
         DataValidationException exception = assertThrows(
                 DataValidationException.class,
@@ -321,7 +323,7 @@ class ResourceValidatorTest {
                     .withContentType(AvatarProperties.MIME_TYPE_PNG)
                     .build();
             mockAllowedMimeTypes(avatarProperties, DEFAULT_ALLOWED_MIME_TYPES);
-            ResourceValidator sut = createSut();
+            var sut = createSut();
 
             DataValidationException exception = assertThrows(
                     DataValidationException.class,
@@ -349,7 +351,7 @@ class ResourceValidatorTest {
                     .withContentType(AvatarProperties.MIME_TYPE_PNG)
                     .build();
             mockAllowedMimeTypes(avatarProperties, DEFAULT_ALLOWED_MIME_TYPES);
-            ResourceValidator sut = createSut();
+            var sut = createSut();
 
             DataValidationException exception = assertThrows(
                     DataValidationException.class,
@@ -382,7 +384,7 @@ class ResourceValidatorTest {
                     .withContentType(AvatarProperties.MIME_TYPE_JPEG)
                     .build();
             mockAllowedMimeTypes(avatarProperties, DEFAULT_ALLOWED_MIME_TYPES);
-            ResourceValidator sut = createSut();
+            var sut = createSut();
 
             String extension = sut.getValidatedExtension(file);
 
@@ -406,7 +408,7 @@ class ResourceValidatorTest {
                     .withContentType("image/jpg")
                     .build();
             mockAllowedMimeTypes(avatarProperties, List.of("image/jpg"));
-            ResourceValidator sut = createSut();
+            var sut = createSut();
 
             String extension = sut.getValidatedExtension(file);
 

@@ -93,7 +93,7 @@ class S3ServiceTest {
         @Test
         @DisplayName("должен бросать исключение, когда ключ пустой")
         void shouldThrowFileStorageExceptionWhenKeyIsBlank() {
-            S3Service sut = createSut();
+            var sut = createSut();
 
             FileStorageException exception = assertThrows(
                     FileStorageException.class,
@@ -111,7 +111,7 @@ class S3ServiceTest {
         @Test
         @DisplayName("должен бросать исключение, когда данные равны null")
         void shouldThrowFileStorageExceptionWhenDataIsNull() {
-            S3Service sut = createSut();
+            var sut = createSut();
 
             FileStorageException exception = assertThrows(
                     FileStorageException.class,
@@ -129,7 +129,7 @@ class S3ServiceTest {
         @Test
         @DisplayName("должен бросать исключение, когда данные пустые")
         void shouldThrowFileStorageExceptionWhenDataIsEmpty() {
-            S3Service sut = createSut();
+            var sut = createSut();
 
             FileStorageException exception = assertThrows(
                     FileStorageException.class,
@@ -147,7 +147,7 @@ class S3ServiceTest {
         @Test
         @DisplayName("должен сохранять объект, когда входные данные валидны")
         void shouldStoreObjectWhenInputIsValid() throws IOException {
-            S3Service sut = createSut();
+            var sut = createSut();
             ArgumentCaptor<PutObjectRequest> requestCaptor = ArgumentCaptor.forClass(PutObjectRequest.class);
             ArgumentCaptor<RequestBody> bodyCaptor = ArgumentCaptor.forClass(RequestBody.class);
 
@@ -176,7 +176,7 @@ class S3ServiceTest {
         @Test
         @DisplayName("должен бросать исключение, когда клиент S3 не сохраняет объект")
         void shouldThrowFileStorageExceptionWhenS3ClientFailsToStoreObject() {
-            S3Service sut = createSut();
+            var sut = createSut();
             SdkException sdkException = mock(SdkException.class);
             when(s3Client.putObject(any(PutObjectRequest.class), any(RequestBody.class))).thenThrow(sdkException);
 
@@ -205,7 +205,7 @@ class S3ServiceTest {
         @Test
         @DisplayName("должен бросать исключение, когда ключ пустой")
         void shouldThrowFileStorageExceptionWhenKeyIsBlank() {
-            S3Service sut = createSut();
+            var sut = createSut();
 
             FileStorageException exception = assertThrows(
                     FileStorageException.class,
@@ -223,7 +223,7 @@ class S3ServiceTest {
         @Test
         @DisplayName("должен удалять объект, когда входные данные валидны")
         void shouldRemoveObjectWhenInputIsValid() {
-            S3Service sut = createSut();
+            var sut = createSut();
             ArgumentCaptor<DeleteObjectRequest> requestCaptor = ArgumentCaptor.forClass(DeleteObjectRequest.class);
 
             sut.removeObject(VALID_KEY);
@@ -243,7 +243,7 @@ class S3ServiceTest {
         @Test
         @DisplayName("должен бросать исключение, когда клиент S3 не удаляет объект")
         void shouldThrowFileStorageExceptionWhenS3ClientFailsToRemoveObject() {
-            S3Service sut = createSut();
+            var sut = createSut();
             SdkException sdkException = mock(SdkException.class);
             doThrow(sdkException).when(s3Client).deleteObject(any(DeleteObjectRequest.class));
 
@@ -272,7 +272,7 @@ class S3ServiceTest {
         @Test
         @DisplayName("должен бросать исключение, когда ключ пустой")
         void shouldThrowFileStorageExceptionWhenKeyIsBlank() {
-            S3Service sut = createSut();
+            var sut = createSut();
 
             FileStorageException exception = assertThrows(
                     FileStorageException.class,
@@ -290,7 +290,7 @@ class S3ServiceTest {
         @Test
         @DisplayName("должен возвращать presigned URL, когда входные данные валидны")
         void shouldReturnPresignedUrlWhenInputIsValid() {
-            S3Service sut = createSut();
+            var sut = createSut();
             PresignedGetObjectRequest presignedRequest = mock(PresignedGetObjectRequest.class);
             when(presignedRequest.url()).thenReturn(PRESIGNED_URL_OBJECT);
             when(presignedRequest.expiration()).thenReturn(PRESIGNED_EXPIRATION);
@@ -321,7 +321,7 @@ class S3ServiceTest {
         @Test
         @DisplayName("должен бросать исключение, когда пресайнер не создаёт ссылку")
         void shouldThrowFileStorageExceptionWhenPresignerFails() {
-            S3Service sut = createSut();
+            var sut = createSut();
             SdkException sdkException = mock(SdkException.class);
             when(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class))).thenThrow(sdkException);
 

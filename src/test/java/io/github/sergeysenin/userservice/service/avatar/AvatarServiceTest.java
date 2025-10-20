@@ -111,7 +111,7 @@ class AvatarServiceTest {
         @Test
         @DisplayName("должен сохранять новый аватар, когда предыдущий отсутствует")
         void shouldUploadAvatarWhenUserDoesNotHavePreviousAvatar() {
-            final var sut = createSut();
+            var sut = createSut();
             final var file = multipartFile()
                     .withName("avatar")
                     .withOriginalFilename(ORIGINAL_FILE_NAME)
@@ -167,7 +167,7 @@ class AvatarServiceTest {
         @Test
         @DisplayName("должен обновлять аватар и удалять старые файлы")
         void shouldReplaceAvatarAndDeletePreviousFilesWhenUserHadAvatar() {
-            final var sut = createSut();
+            var sut = createSut();
             final var file = multipartFile()
                     .withName("avatar")
                     .withOriginalFilename(ORIGINAL_FILE_NAME)
@@ -223,7 +223,7 @@ class AvatarServiceTest {
         @Test
         @DisplayName("должен бросать AvatarUploadException, когда чтение файла завершилось с ошибкой")
         void shouldThrowAvatarUploadExceptionWhenFileCannotBeRead() {
-            final var sut = createSut();
+            var sut = createSut();
             final var ioException = new IOException("read failed");
             final var file = multipartFile()
                     .withName("avatar")
@@ -264,7 +264,7 @@ class AvatarServiceTest {
         @Test
         @DisplayName("должен возвращать ссылки на аватар, когда он существует")
         void shouldReturnAvatarUrlsWhenAvatarExists() {
-            final var sut = createSut();
+            var sut = createSut();
             final var avatar = createAvatarEntity(NEW_AVATAR_PATHS);
             final var user = createDefaultUser(avatar);
 
@@ -304,7 +304,7 @@ class AvatarServiceTest {
         @Test
         @DisplayName("должен обнулять ссылку, если путь пустой")
         void shouldSkipPresignedUrlGenerationWhenPathBlank() {
-            final var sut = createSut();
+            var sut = createSut();
             final var avatar = createAvatarEntity(new AvatarObjectPathsDto(
                     NEW_ORIGINAL_PATH,
                     " ",
@@ -335,7 +335,7 @@ class AvatarServiceTest {
         @Test
         @DisplayName("должен бросать AvatarNotFoundException, когда аватар отсутствует")
         void shouldThrowAvatarNotFoundExceptionWhenAvatarMissing() {
-            final var sut = createSut();
+            var sut = createSut();
             final var user = createDefaultUser(null);
 
             when(userService.getUserByIdOrThrow(USER_ID)).thenReturn(user);
@@ -362,7 +362,7 @@ class AvatarServiceTest {
         @Test
         @DisplayName("должен удалять аватар и возвращать подтверждение")
         void shouldDeleteAvatarAndReturnConfirmation() {
-            final var sut = createSut();
+            var sut = createSut();
             final var avatar = createAvatarEntity(NEW_AVATAR_PATHS);
             final var user = createDefaultUser(avatar);
 
@@ -395,7 +395,7 @@ class AvatarServiceTest {
         @Test
         @DisplayName("должен бросать AvatarNotFoundException, когда нечего удалять")
         void shouldThrowAvatarNotFoundExceptionWhenDeletingMissingAvatar() {
-            final var sut = createSut();
+            var sut = createSut();
             final var user = createDefaultUser(null);
 
             when(userService.getUserByIdOrThrow(USER_ID)).thenReturn(user);
