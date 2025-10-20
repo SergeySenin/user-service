@@ -294,8 +294,7 @@ class S3ServiceTest {
             PresignedGetObjectRequest presignedRequest = mock(PresignedGetObjectRequest.class);
             when(presignedRequest.url()).thenReturn(PRESIGNED_URL_OBJECT);
             when(presignedRequest.expiration()).thenReturn(PRESIGNED_EXPIRATION);
-            when(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class)))
-                    .thenReturn(presignedRequest);
+            when(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class))).thenReturn(presignedRequest);
             ArgumentCaptor<GetObjectPresignRequest> presignCaptor =
                     ArgumentCaptor.forClass(GetObjectPresignRequest.class);
 

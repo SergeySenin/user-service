@@ -1,14 +1,17 @@
 package io.github.sergeysenin.userservice.exception.type.base;
 
 import io.github.sergeysenin.userservice.exception.code.ErrorCode;
-import io.github.sergeysenin.userservice.exception.dto.ErrorResponse;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,33 +25,25 @@ class BaseServiceExceptionTest {
 
     private static final ErrorCode TEST_ERROR_CODE = ErrorCode.USER_NOT_FOUND;
     private static final String CUSTOM_MESSAGE = "Пользователь не найден в системе";
+    private static final String BLANK_MESSAGE = "   ";
     private static final String DETAILS_KEY = "username";
     private static final String DETAILS_VALUE = "john.doe";
     private static final String NULL_KEY_EXCEPTION_MESSAGE = "details содержит null-ключ";
-    private static final String NULL_VALUE_EXCEPTION_MESSAGE_PREFIX = "details содержит null-значение";
+    private static final String NULL_VALUE_EXCEPTION_MESSAGE =
+            "details содержит null-значение для ключа '" + DETAILS_KEY + "'";
+    private static final String CAUSE_MESSAGE = "test cause";
+    private static final Map<String, String> EMPTY_DETAILS = Map.of();
+    private static final int EXPECTED_SINGLE_DETAIL_COUNT = 1;
 
     @Nested
     @DisplayName("Конструкторы: обработка сообщения")
     class ConstructorMessageTests {
 
-        @Test
-        @DisplayName("должен использовать сообщение по умолчанию, когда message равно null")
-        void shouldUseDefaultMessageWhenMessageNull() {
-            BaseServiceException sut = createSut(TEST_ERROR_CODE, null);
-
-            assertAll("Сообщение должно заменяться на дефолтное",
-                    () -> assertEquals(
-                            TEST_ERROR_CODE.getDefaultMessage(),
-                            sut.getMessage(),
-                            "Сообщение должно совпадать с дефолтным значением"
-                    ),
-                    () -> assertSame(TEST_ERROR_CODE, sut.getErrorCode(), "Должен сохраняться errorCode"));
-        }
-
-        @Test
-        @DisplayName("должен использовать сообщение по умолчанию, когда message содержит только пробелы")
-        void shouldUseDefaultMessageWhenMessageBlank() {
-            BaseServiceException sut = createSut(TEST_ERROR_CODE, "   ");
+        @DisplayName("должен использовать сообщение по умолчанию, когда message null или пустое")
+        @ParameterizedTest(name = "{displayName} [{index}]")
+        @MethodSource("io.github.sergeysenin.userservice.exception.type.base.BaseServiceExceptionTest#invalidMessages")
+        void shouldUseDefaultMessageWhenMessageNullOrBlank(String message) {
+            var sut = createSut(TEST_ERROR_CODE, message);
 
             assertAll("Сообщение должно заменяться на дефолтное",
                     () -> assertEquals(
@@ -62,7 +57,7 @@ class BaseServiceExceptionTest {
         @Test
         @DisplayName("должен сохранять пользовательское сообщение, когда оно передано")
         void shouldStoreProvidedMessageWhenMessageNotBlank() {
-            BaseServiceException sut = createSut(TEST_ERROR_CODE, CUSTOM_MESSAGE);
+            var sut = createSut(TEST_ERROR_CODE, CUSTOM_MESSAGE);
 
             assertAll("Сообщение должно совпадать с пользовательским",
                     () -> assertEquals(
@@ -76,9 +71,9 @@ class BaseServiceExceptionTest {
         @Test
         @DisplayName("должен сохранять причину, когда она передана")
         void shouldPropagateCauseWhenProvided() {
-            Throwable cause = new IllegalStateException("test cause");
+            var cause = new IllegalStateException(CAUSE_MESSAGE);
 
-            BaseServiceException sut = createSut(TEST_ERROR_CODE, CUSTOM_MESSAGE, cause);
+            var sut = createSut(TEST_ERROR_CODE, CUSTOM_MESSAGE, cause);
 
             assertAll("Причина должна сохраняться",
                     () -> assertEquals(
@@ -94,38 +89,32 @@ class BaseServiceExceptionTest {
     @DisplayName("Конструкторы: обработка деталей")
     class ConstructorDetailsTests {
 
-        @Test
-        @DisplayName("должен возвращать пустые детали, когда details равно null")
-        void shouldReturnEmptyDetailsWhenDetailsNull() {
-            BaseServiceException sut = createSutWithDetails(TEST_ERROR_CODE, CUSTOM_MESSAGE, null);
+        @DisplayName("должен возвращать пустые детали, когда details null или пуст")
+        @ParameterizedTest(name = "{displayName} [{index}]")
+        @MethodSource("io.github.sergeysenin.userservice.exception.type.base.BaseServiceExceptionTest#emptyDetails")
+        void shouldReturnEmptyDetailsWhenDetailsNullOrEmpty(Map<String, String> sourceDetails) {
+            var sut = createSutWithDetails(TEST_ERROR_CODE, CUSTOM_MESSAGE, sourceDetails);
 
-            assertAll("Детали должны быть пустыми",
+            assertAll("Проверка пустых деталей при отсутствии данных",
                     () -> assertNotNull(sut.getDetails(), "Коллекция деталей не должна быть null"),
-                    () -> assertTrue(sut.getDetails().isEmpty(), "Детали должны быть пустыми"));
-        }
-
-        @Test
-        @DisplayName("должен возвращать пустые детали, когда details пуст")
-        void shouldReturnEmptyDetailsWhenDetailsEmpty() {
-            BaseServiceException sut = createSutWithDetails(TEST_ERROR_CODE, CUSTOM_MESSAGE, Map.of());
-
-            assertAll("Детали должны быть пустыми",
-                    () -> assertNotNull(sut.getDetails(), "Коллекция деталей не должна быть null"),
-                    () -> assertTrue(sut.getDetails().isEmpty(), "Детали должны быть пустыми"));
+                    () -> assertTrue(
+                            sut.getDetails().isEmpty(),
+                            "Детали должны быть пустыми при передаче null или пустой коллекции"
+                    ));
         }
 
         @Test
         @DisplayName("должен создавать неизменяемую копию деталей")
         void shouldCreateImmutableCopyWhenDetailsProvided() {
-            Map<String, String> originalDetails = createDetails();
+            var originalDetails = createDetails();
 
-            BaseServiceException sut = createSutWithDetails(TEST_ERROR_CODE, CUSTOM_MESSAGE, originalDetails);
+            var sut = createSutWithDetails(TEST_ERROR_CODE, CUSTOM_MESSAGE, originalDetails);
 
             originalDetails.put("another", "value");
 
-            assertAll("Детали должны копироваться и быть неизменяемыми",
+            assertAll("Проверка копирования и неизменности деталей",
                     () -> assertEquals(
-                            1,
+                            EXPECTED_SINGLE_DETAIL_COUNT,
                             sut.getDetails().size(),
                             "Размер деталей не должен измениться после модификации исходной карты"
                     ),
@@ -144,39 +133,43 @@ class BaseServiceExceptionTest {
         @Test
         @DisplayName("должен выбрасывать NullPointerException, когда details содержит null-ключ")
         void shouldThrowNullPointerExceptionWhenDetailsContainsNullKey() {
-            Map<String, String> detailsWithNullKey = new HashMap<>();
+            var detailsWithNullKey = new HashMap<String, String>();
             detailsWithNullKey.put(null, DETAILS_VALUE);
 
-            NullPointerException exception = assertThrows(
+            var exception = assertThrows(
                     NullPointerException.class,
                     () -> createSutWithDetails(TEST_ERROR_CODE, CUSTOM_MESSAGE, detailsWithNullKey),
                     "Ожидается NullPointerException при наличии null-ключа"
             );
 
-            assertEquals(
-                    NULL_KEY_EXCEPTION_MESSAGE,
-                    exception.getMessage(),
-                    "Сообщение исключения должно информировать о null-ключе"
-            );
+            assertAll("Проверка данных исключения",
+                    () -> assertNotNull(exception.getMessage(), "Сообщение исключения не должно быть null"),
+                    () -> assertEquals(
+                            NULL_KEY_EXCEPTION_MESSAGE,
+                            exception.getMessage(),
+                            "Сообщение исключения должно информировать о null-ключе"
+                    ));
         }
 
         @Test
         @DisplayName("должен выбрасывать NullPointerException, когда details содержит null-значение")
         void shouldThrowNullPointerExceptionWhenDetailsContainsNullValue() {
-            Map<String, String> detailsWithNullValue = new HashMap<>();
+            var detailsWithNullValue = new HashMap<String, String>();
             detailsWithNullValue.put(DETAILS_KEY, null);
 
-            NullPointerException exception = assertThrows(
+            var exception = assertThrows(
                     NullPointerException.class,
                     () -> createSutWithDetails(TEST_ERROR_CODE, CUSTOM_MESSAGE, detailsWithNullValue),
                     "Ожидается NullPointerException при наличии null-значения"
             );
 
-            assertTrue(
-                    exception.getMessage() != null &&
-                            exception.getMessage().startsWith(NULL_VALUE_EXCEPTION_MESSAGE_PREFIX),
-                    "Сообщение исключения должно информировать о null-значении"
-            );
+            assertAll("Проверка данных исключения",
+                    () -> assertNotNull(exception.getMessage(), "Сообщение исключения не должно быть null"),
+                    () -> assertEquals(
+                            NULL_VALUE_EXCEPTION_MESSAGE,
+                            exception.getMessage(),
+                            "Сообщение исключения должно информировать о null-значении"
+                    ));
         }
     }
 
@@ -187,17 +180,19 @@ class BaseServiceExceptionTest {
         @Test
         @DisplayName("должен выбрасывать NullPointerException, когда errorCode равен null")
         void shouldThrowNullPointerExceptionWhenErrorCodeIsNull() {
-            NullPointerException exception = assertThrows(
+            var exception = assertThrows(
                     NullPointerException.class,
                     () -> createSut(null, CUSTOM_MESSAGE),
                     "Ожидается NullPointerException при отсутствии errorCode"
             );
 
-            assertEquals(
-                    "errorCode не может быть null",
-                    exception.getMessage(),
-                    "Сообщение исключения должно информировать о null errorCode"
-            );
+            assertAll("Проверка данных исключения",
+                    () -> assertNotNull(exception.getMessage(), "Сообщение исключения не должно быть null"),
+                    () -> assertEquals(
+                            "errorCode не может быть null",
+                            exception.getMessage(),
+                            "Сообщение исключения должно информировать о null errorCode"
+                    ));
         }
     }
 
@@ -208,16 +203,20 @@ class BaseServiceExceptionTest {
         @Test
         @DisplayName("должен создавать ErrorResponse с актуальными данными")
         void shouldBuildErrorResponseWithCurrentState() {
-            Map<String, String> details = createDetails();
-            BaseServiceException sut = createSutWithDetails(
+            var details = createDetails();
+            var sut = createSutWithDetails(
                     TEST_ERROR_CODE,
                     CUSTOM_MESSAGE,
                     details
             );
 
-            ErrorResponse response = sut.toErrorResponse();
+            var lowerTimestampBound = Instant.now();
 
-            assertAll("ErrorResponse должен содержать корректные данные",
+            var response = sut.toErrorResponse();
+
+            var upperTimestampBound = Instant.now();
+
+            assertAll("Проверка содержимого ErrorResponse",
                     () -> assertEquals(
                             TEST_ERROR_CODE.getCode(),
                             response.code(),
@@ -229,6 +228,16 @@ class BaseServiceExceptionTest {
                             "Сообщение должно совпадать с текущим состоянием исключения"
                     ),
                     () -> assertNotNull(response.timestamp(), "Timestamp должен быть заполнен"),
+                    () -> assertAll("Проверка диапазона timestamp",
+                            () -> assertTrue(
+                                    !response.timestamp().isBefore(lowerTimestampBound),
+                                    "Timestamp не должен быть раньше нижней границы"
+                            ),
+                            () -> assertTrue(
+                                    !response.timestamp().isAfter(upperTimestampBound),
+                                    "Timestamp не должен быть позже верхней границы"
+                            )
+                    ),
                     () -> assertEquals(
                             details,
                             response.details(),
@@ -243,7 +252,7 @@ class BaseServiceExceptionTest {
     }
 
     private Map<String, String> createDetails() {
-        Map<String, String> details = new HashMap<>();
+        var details = new HashMap<String, String>();
         details.put(DETAILS_KEY, DETAILS_VALUE);
         return details;
     }
@@ -262,6 +271,14 @@ class BaseServiceExceptionTest {
             Map<String, String> details
     ) {
         return new TestServiceException(errorCode, message, details, null);
+    }
+
+    private static Stream<String> invalidMessages() {
+        return Stream.of(null, BLANK_MESSAGE);
+    }
+
+    private static Stream<Map<String, String>> emptyDetails() {
+        return Stream.of(null, EMPTY_DETAILS);
     }
 
     private static final class TestServiceException extends BaseServiceException {

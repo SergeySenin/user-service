@@ -85,31 +85,9 @@ class ResourceValidatorTest {
         }
 
         @Test
-        @DisplayName("должен бросать исключение, когда файл помечен как пустой")
-        void shouldThrowFileEmptyWhenMultipartFileIsEmpty() {
+        @DisplayName("должен бросать исключение, когда файл не содержит данных")
+        void shouldThrowFileEmptyWhenMultipartFileHasNoContent() {
             MultipartFile file = multipartFileBuilder()
-                    .withEmpty(true)
-                    .build();
-            ResourceValidator sut = createSut();
-
-            DataValidationException exception = assertThrows(
-                    DataValidationException.class,
-                    () -> sut.getValidatedExtension(file),
-                    "Ожидалось исключение, если файл пустой"
-            );
-
-            assertAll(
-                    () -> assertEquals(FILE_EMPTY_MESSAGE, exception.getMessage(),
-                            "Сообщение должно указывать на пустой файл"),
-                    () -> verifyNoInteractionsWithAvatarProperties()
-            );
-        }
-
-        @Test
-        @DisplayName("должен бросать исключение, когда размер файла равен нулю")
-        void shouldThrowFileEmptyWhenMultipartFileSizeIsZero() {
-            MultipartFile file = multipartFileBuilder()
-                    .withEmpty(false)
                     .withSize(0L)
                     .build();
             ResourceValidator sut = createSut();
@@ -117,12 +95,12 @@ class ResourceValidatorTest {
             DataValidationException exception = assertThrows(
                     DataValidationException.class,
                     () -> sut.getValidatedExtension(file),
-                    "Ожидалось исключение при нулевом размере файла"
+                    "Ожидалось исключение при отсутствии данных файла"
             );
 
             assertAll(
                     () -> assertEquals(FILE_EMPTY_MESSAGE, exception.getMessage(),
-                            "Сообщение должно указывать, что файл пустой"),
+                            "Сообщение должно указывать на пустой файл"),
                     () -> verifyNoInteractionsWithAvatarProperties()
             );
         }
@@ -266,6 +244,29 @@ class ResourceValidatorTest {
                     () -> verifyAllowedMimeTypesRequestedOnce()
             );
         }
+    }
+
+    @Test
+    @DisplayName("должен бросать исключение, когда список разрешённых MIME-типов пуст")
+    void shouldThrowMimeNotAllowedWhenAllowListIsEmpty() {
+        MultipartFile file = multipartFileBuilder()
+                .withOriginalFilename("avatar.png")
+                .withContentType(AvatarProperties.MIME_TYPE_PNG)
+                .build();
+        mockAllowedMimeTypes(List.of());
+        ResourceValidator sut = createSut();
+
+        DataValidationException exception = assertThrows(
+                DataValidationException.class,
+                () -> sut.getValidatedExtension(file),
+                "Ожидалось исключение при пустом списке MIME-типов"
+        );
+
+        assertAll(
+                () -> assertEquals(MIME_NOT_ALLOWED_MESSAGE, exception.getMessage(),
+                        "Сообщение должно указывать на недопустимый MIME-тип"),
+                () -> verifyAllowedMimeTypesRequestedOnce()
+        );
     }
 
     @Nested

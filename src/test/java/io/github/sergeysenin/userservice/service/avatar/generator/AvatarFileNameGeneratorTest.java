@@ -61,6 +61,8 @@ class AvatarFileNameGeneratorTest {
                 mockedUuid.when(UUID::randomUUID).thenReturn(FIRST_GENERATED_UUID);
 
                 result = sut.generateFilePaths(USER_ID, FILE_EXTENSION);
+
+                mockedUuid.verify(UUID::randomUUID, only());
             }
 
             assertAll("Все версии аватара должны иметь корректные пути",
@@ -104,6 +106,9 @@ class AvatarFileNameGeneratorTest {
 
                 firstResult = sut.generateFilePaths(USER_ID, FILE_EXTENSION);
                 secondResult = sut.generateFilePaths(USER_ID, FILE_EXTENSION);
+
+                mockedUuid.verify(UUID::randomUUID, times(2));
+                mockedUuid.verifyNoMoreInteractions();
             }
 
             assertAll("Каждый вызов должен использовать собственный UUID",

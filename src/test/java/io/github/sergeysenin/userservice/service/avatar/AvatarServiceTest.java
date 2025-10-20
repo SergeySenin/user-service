@@ -24,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import org.springframework.lang.NonNull;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
@@ -96,8 +97,7 @@ class AvatarServiceTest {
     private AvatarMapper avatarMapper;
 
     private AvatarService createSut() {
-        return new AvatarService(
-                userService,
+        return new AvatarService(userService,
                 s3Service,
                 resourceService,
                 resourceValidator,
@@ -454,6 +454,7 @@ class AvatarServiceTest {
     ) implements MultipartFile {
 
         @Override
+        @NonNull
         public String getName() {
             return name;
         }
@@ -479,7 +480,8 @@ class AvatarServiceTest {
         }
 
         @Override
-        public byte[] getBytes() throws IOException {
+        @NonNull
+        public byte [] getBytes() throws IOException {
             if (bytesException != null) {
                 throw bytesException;
             }
@@ -487,12 +489,13 @@ class AvatarServiceTest {
         }
 
         @Override
+        @NonNull
         public InputStream getInputStream() throws IOException {
             return new ByteArrayInputStream(getBytes());
         }
 
         @Override
-        public void transferTo(File dest) throws IOException {
+        public void transferTo(@NonNull File dest) throws IOException {
             throw new IOException("transferTo не поддерживается в тестовой реализации");
         }
     }
