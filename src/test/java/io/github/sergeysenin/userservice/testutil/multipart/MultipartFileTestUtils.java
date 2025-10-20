@@ -101,8 +101,7 @@ public final class MultipartFileTestUtils {
     ) implements MultipartFile {
 
         @Override
-        @NonNull
-        public String getName() {
+        public @NonNull String getName() {
             return name;
         }
 
@@ -128,7 +127,7 @@ public final class MultipartFileTestUtils {
 
         @Override
         @NonNull
-        public byte[] getBytes() throws IOException {
+        public byte [] getBytes() throws IOException {
             if (bytesException != null) {
                 throw bytesException;
             }
@@ -136,8 +135,7 @@ public final class MultipartFileTestUtils {
         }
 
         @Override
-        @NonNull
-        public InputStream getInputStream() throws IOException {
+        public @NonNull InputStream getInputStream() throws IOException {
             return new ByteArrayInputStream(getBytes());
         }
 

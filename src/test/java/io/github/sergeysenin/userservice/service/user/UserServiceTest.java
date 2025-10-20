@@ -17,6 +17,7 @@ import org.mockito.quality.Strictness;
 import java.util.Optional;
 
 import static io.github.sergeysenin.userservice.testutil.user.UserTestFactory.userBuilder;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -140,5 +141,4 @@ class UserServiceTest {
     private UserService createSut() {
         return new UserService(userRepository);
     }
-
 }

@@ -33,12 +33,12 @@ import java.util.stream.Stream;
 public class AvatarService {
 
     private final UserService userService;
-    private final S3Service s3Service;
     private final ResourceService resourceService;
+    private final S3Service s3Service;
     private final ResourceValidator resourceValidator;
-    private final AvatarFileNameGenerator avatarFileNameGenerator;
-    private final AvatarProperties avatarProperties;
     private final AvatarMapper avatarMapper;
+    private final AvatarProperties avatarProperties;
+    private final AvatarFileNameGenerator avatarFileNameGenerator;
 
     @Transactional
     public UploadAvatarResponse uploadAvatar(Long userId, MultipartFile file) {

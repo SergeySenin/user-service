@@ -26,12 +26,14 @@ import java.io.IOException;
 import static io.github.sergeysenin.userservice.testutil.avatar.AvatarTestFactory.createAvatarEntity;
 import static io.github.sergeysenin.userservice.testutil.multipart.MultipartFileTestUtils.multipartFile;
 import static io.github.sergeysenin.userservice.testutil.user.UserTestFactory.createDefaultUser;
+
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -76,28 +78,29 @@ class AvatarServiceTest {
     private UserService userService;
 
     @Mock
-    private S3Service s3Service;
+    private ResourceService resourceService;
 
     @Mock
-    private ResourceService resourceService;
+    private S3Service s3Service;
 
     @Mock
     private ResourceValidator resourceValidator;
 
     @Mock
-    private AvatarFileNameGenerator avatarFileNameGenerator;
-
-    @Mock
     private AvatarMapper avatarMapper;
 
+    @Mock
+    private AvatarFileNameGenerator avatarFileNameGenerator;
+
     private AvatarService createSut() {
-        return new AvatarService(userService,
-                s3Service,
+        return new AvatarService(
+                userService,
                 resourceService,
+                s3Service,
                 resourceValidator,
-                avatarFileNameGenerator,
+                avatarMapper,
                 AVATAR_PROPERTIES,
-                avatarMapper
+                avatarFileNameGenerator
         );
     }
 
@@ -410,4 +413,5 @@ class AvatarServiceTest {
             verifyNoMoreInteractions(userService);
             verifyNoInteractions(s3Service, resourceService, resourceValidator, avatarFileNameGenerator, avatarMapper);
         }
+    }
 }

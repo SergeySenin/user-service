@@ -21,14 +21,10 @@ import static io.github.sergeysenin.userservice.testutil.resource.ResourceValida
 import static io.github.sergeysenin.userservice.testutil.resource.ResourceValidatorTestData.mockAllowedMimeTypes;
 import static io.github.sergeysenin.userservice.testutil.resource.ResourceValidatorTestData.verifyAllowedMimeTypesRequestedOnce;
 import static io.github.sergeysenin.userservice.testutil.resource.ResourceValidatorTestData.verifyNoInteractionsWithAvatarProperties;
+
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.STRICT_STUBS)
@@ -421,5 +417,4 @@ class ResourceValidatorTest {
             );
         }
     }
-
 }

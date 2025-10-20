@@ -31,6 +31,7 @@ import java.time.Duration;
 import java.time.Instant;
 
 import static io.github.sergeysenin.userservice.testutil.net.UrlTestUtils.createUrl;
+
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -177,8 +178,7 @@ class S3ServiceTest {
         void shouldThrowFileStorageExceptionWhenS3ClientFailsToStoreObject() {
             S3Service sut = createSut();
             SdkException sdkException = mock(SdkException.class);
-            when(s3Client.putObject(any(PutObjectRequest.class), any(RequestBody.class)))
-                    .thenThrow(sdkException);
+            when(s3Client.putObject(any(PutObjectRequest.class), any(RequestBody.class))).thenThrow(sdkException);
 
             FileStorageException exception = assertThrows(
                     FileStorageException.class,
@@ -323,8 +323,7 @@ class S3ServiceTest {
         void shouldThrowFileStorageExceptionWhenPresignerFails() {
             S3Service sut = createSut();
             SdkException sdkException = mock(SdkException.class);
-            when(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class)))
-                    .thenThrow(sdkException);
+            when(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class))).thenThrow(sdkException);
 
             FileStorageException exception = assertThrows(
                     FileStorageException.class,
@@ -343,5 +342,4 @@ class S3ServiceTest {
             );
         }
     }
-
 }

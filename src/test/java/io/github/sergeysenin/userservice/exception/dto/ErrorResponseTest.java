@@ -16,9 +16,9 @@ import java.util.stream.Stream;
 
 import static io.github.sergeysenin.userservice.testutil.exception.ErrorResponseTestUtils.assertResponse;
 import static io.github.sergeysenin.userservice.testutil.exception.ErrorResponseTestUtils.createDetails;
+
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -115,7 +115,12 @@ class ErrorResponseTest {
         @DisplayName("должен выбрасывать NullPointerException, если код равен null")
         void shouldThrowNullPointerExceptionWhenCodeIsNull() {
             NullPointerException exception = assertThrows(NullPointerException.class,
-                    () -> new ErrorResponse(null, CUSTOM_MESSAGE, Instant.now(), createDetails(DETAILS_KEY, DETAILS_VALUE)),
+                    () -> new ErrorResponse(
+                            null,
+                            CUSTOM_MESSAGE,
+                            Instant.now(),
+                            createDetails(DETAILS_KEY, DETAILS_VALUE)
+                    ),
                     "Конструктор должен проверять код на null");
 
             assertAll("Проверка данных исключения",
@@ -215,5 +220,4 @@ class ErrorResponseTest {
                             "Сообщение исключения должно содержать причину отсутствия errorCode"));
         }
     }
-
 }
