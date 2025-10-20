@@ -2,9 +2,6 @@ package io.github.sergeysenin.userservice.service.avatar;
 
 import io.github.sergeysenin.userservice.config.avatar.AvatarProperties;
 import io.github.sergeysenin.userservice.dto.avatar.AvatarObjectPathsDto;
-import io.github.sergeysenin.userservice.entity.user.User;
-import io.github.sergeysenin.userservice.entity.user.UserProfileAvatar;
-import io.github.sergeysenin.userservice.entity.user.country.Country;
 import io.github.sergeysenin.userservice.exception.type.AvatarNotFoundException;
 import io.github.sergeysenin.userservice.exception.type.AvatarUploadException;
 import io.github.sergeysenin.userservice.mapper.avatar.AvatarMapper;
@@ -24,14 +21,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import org.springframework.lang.NonNull;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 
+import static io.github.sergeysenin.userservice.testutil.avatar.AvatarTestFactory.createAvatarEntity;
+import static io.github.sergeysenin.userservice.testutil.multipart.MultipartFileTestUtils.multipartFile;
+import static io.github.sergeysenin.userservice.testutil.user.UserTestFactory.createDefaultUser;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -115,8 +109,13 @@ class AvatarServiceTest {
         @DisplayName("должен сохранять новый аватар, когда предыдущий отсутствует")
         void shouldUploadAvatarWhenUserDoesNotHavePreviousAvatar() {
             final var sut = createSut();
-            final var file = multipartFileBuilder().build();
-            final var user = createUser(null);
+            final var file = multipartFile()
+                    .withName("avatar")
+                    .withOriginalFilename(ORIGINAL_FILE_NAME)
+                    .withContentType("image/png")
+                    .withContent(ORIGINAL_BYTES)
+                    .build();
+            final var user = createDefaultUser(null);
             final var mappedAvatar = createAvatarEntity(NEW_AVATAR_PATHS);
 
             when(userService.getUserByIdOrThrow(USER_ID)).thenReturn(user);
@@ -130,7 +129,7 @@ class AvatarServiceTest {
 
             final var response = sut.uploadAvatar(USER_ID, file);
 
-            assertAll(
+            assertAll("Проверка ответа при загрузке нового аватара без предыдущего",
                     () -> assertEquals(USER_ID, response.userId(),
                             "В ответе должен содержаться идентификатор пользователя"),
                     () -> assertEquals(NEW_AVATAR_PATHS, response.fileIds(),
@@ -166,9 +165,14 @@ class AvatarServiceTest {
         @DisplayName("должен обновлять аватар и удалять старые файлы")
         void shouldReplaceAvatarAndDeletePreviousFilesWhenUserHadAvatar() {
             final var sut = createSut();
-            final var file = multipartFileBuilder().build();
+            final var file = multipartFile()
+                    .withName("avatar")
+                    .withOriginalFilename(ORIGINAL_FILE_NAME)
+                    .withContentType("image/png")
+                    .withContent(ORIGINAL_BYTES)
+                    .build();
             final var oldAvatar = createAvatarEntity(OLD_AVATAR_PATHS);
-            final var user = createUser(oldAvatar);
+            final var user = createDefaultUser(oldAvatar);
             final var mappedAvatar = createAvatarEntity(NEW_AVATAR_PATHS);
 
             when(userService.getUserByIdOrThrow(USER_ID)).thenReturn(user);
@@ -182,7 +186,7 @@ class AvatarServiceTest {
 
             final var response = sut.uploadAvatar(USER_ID, file);
 
-            assertAll(
+            assertAll("Проверка обновления существующего аватара",
                     () -> assertEquals(NEW_AVATAR_PATHS, response.fileIds(),
                             "Ответ должен содержать пути новых файлов"),
                     () -> assertEquals(mappedAvatar, user.getUserProfileAvatar(),
@@ -218,10 +222,14 @@ class AvatarServiceTest {
         void shouldThrowAvatarUploadExceptionWhenFileCannotBeRead() {
             final var sut = createSut();
             final var ioException = new IOException("read failed");
-            final var file = multipartFileBuilder()
+            final var file = multipartFile()
+                    .withName("avatar")
+                    .withOriginalFilename(ORIGINAL_FILE_NAME)
+                    .withContentType("image/png")
+                    .withContent(ORIGINAL_BYTES)
                     .withBytesException(ioException)
                     .build();
-            final var user = createUser(null);
+            final var user = createDefaultUser(null);
 
             when(userService.getUserByIdOrThrow(USER_ID)).thenReturn(user);
             when(resourceValidator.getValidatedExtension(file)).thenReturn(EXTENSION_PNG);
@@ -232,7 +240,7 @@ class AvatarServiceTest {
                     "Ожидалось исключение при ошибке чтения файла"
             );
 
-            assertAll(
+            assertAll("Проверка исключения при ошибке чтения файла",
                     () -> assertEquals("Ошибка чтения файла аватара", exception.getMessage(),
                             "Сообщение должно указывать на ошибку чтения"),
                     () -> assertEquals(ioException, exception.getCause(),
@@ -255,7 +263,7 @@ class AvatarServiceTest {
         void shouldReturnAvatarUrlsWhenAvatarExists() {
             final var sut = createSut();
             final var avatar = createAvatarEntity(NEW_AVATAR_PATHS);
-            final var user = createUser(avatar);
+            final var user = createDefaultUser(avatar);
 
             when(userService.getUserByIdOrThrow(USER_ID)).thenReturn(user);
             when(s3Service.generatePresignedUrl(NEW_ORIGINAL_PATH)).thenReturn("original-url");
@@ -264,7 +272,7 @@ class AvatarServiceTest {
 
             final var response = sut.getAvatar(USER_ID);
 
-            assertAll(
+            assertAll("Проверка ответа с доступным аватаром",
                     () -> assertEquals(USER_ID, response.userId(),
                             "В ответе должен быть идентификатор пользователя"),
                     () -> assertTrue(response.hasAvatar(),
@@ -272,7 +280,7 @@ class AvatarServiceTest {
                     () -> {
                         final var paths = response.fileIds();
                         assertNotNull(paths, "Пути не должны быть null");
-                        assertAll(
+                        assertAll("Проверка подписей для всех ссылок",
                                 () -> assertEquals("original-url", paths.originalPath(),
                                         "Должна возвращаться ссылка на оригинал"),
                                 () -> assertEquals("thumbnail-url", paths.thumbnailPath(),
@@ -299,14 +307,14 @@ class AvatarServiceTest {
                     " ",
                     null
             ));
-            final var user = createUser(avatar);
+            final var user = createDefaultUser(avatar);
 
             when(userService.getUserByIdOrThrow(USER_ID)).thenReturn(user);
             when(s3Service.generatePresignedUrl(NEW_ORIGINAL_PATH)).thenReturn("original-url");
 
             final var response = sut.getAvatar(USER_ID);
 
-            assertAll(
+            assertAll("Проверка поведения при пустых путях аватара",
                     () -> assertEquals("original-url", response.fileIds().originalPath(),
                             "Должна возвращаться ссылка только для непустого пути"),
                     () -> assertNull(response.fileIds().thumbnailPath(),
@@ -325,7 +333,7 @@ class AvatarServiceTest {
         @DisplayName("должен бросать AvatarNotFoundException, когда аватар отсутствует")
         void shouldThrowAvatarNotFoundExceptionWhenAvatarMissing() {
             final var sut = createSut();
-            final var user = createUser(null);
+            final var user = createDefaultUser(null);
 
             when(userService.getUserByIdOrThrow(USER_ID)).thenReturn(user);
 
@@ -353,14 +361,14 @@ class AvatarServiceTest {
         void shouldDeleteAvatarAndReturnConfirmation() {
             final var sut = createSut();
             final var avatar = createAvatarEntity(NEW_AVATAR_PATHS);
-            final var user = createUser(avatar);
+            final var user = createDefaultUser(avatar);
 
             when(userService.getUserByIdOrThrow(USER_ID)).thenReturn(user);
             when(avatarMapper.toDto(avatar)).thenReturn(NEW_AVATAR_PATHS);
 
             final var response = sut.deleteAvatar(USER_ID);
 
-            assertAll(
+            assertAll("Проверка ответа после удаления аватара",
                     () -> assertEquals(USER_ID, response.userId(),
                             "В ответе должен быть идентификатор пользователя"),
                     () -> assertTrue(response.removed(),
@@ -385,7 +393,7 @@ class AvatarServiceTest {
         @DisplayName("должен бросать AvatarNotFoundException, когда нечего удалять")
         void shouldThrowAvatarNotFoundExceptionWhenDeletingMissingAvatar() {
             final var sut = createSut();
-            final var user = createUser(null);
+            final var user = createDefaultUser(null);
 
             when(userService.getUserByIdOrThrow(USER_ID)).thenReturn(user);
 
@@ -402,101 +410,4 @@ class AvatarServiceTest {
             verifyNoMoreInteractions(userService);
             verifyNoInteractions(s3Service, resourceService, resourceValidator, avatarFileNameGenerator, avatarMapper);
         }
-    }
-
-    private static User createUser(UserProfileAvatar avatar) {
-        return User.builder()
-                .username("john.doe")
-                .email("john.doe@example.com")
-                .phone("+70000000000")
-                .password("encoded")
-                .country(Country.builder().title("Russia").build())
-                .userProfileAvatar(avatar)
-                .build();
-    }
-
-    private static UserProfileAvatar createAvatarEntity(AvatarObjectPathsDto paths) {
-        return UserProfileAvatar.builder()
-                .originalPath(paths.originalPath())
-                .thumbnailPath(paths.thumbnailPath())
-                .profilePath(paths.profilePath())
-                .build();
-    }
-
-    private static MultipartFileBuilder multipartFileBuilder() {
-        return new MultipartFileBuilder();
-    }
-
-    private static final class MultipartFileBuilder {
-
-        private String name = "avatar";
-        private String originalFilename = ORIGINAL_FILE_NAME;
-        private String contentType = "image/png";
-        private byte[] content = ORIGINAL_BYTES;
-        private IOException bytesException;
-
-        private MultipartFileBuilder withBytesException(IOException value) {
-            this.bytesException = value;
-            return this;
-        }
-
-        private MultipartFile build() {
-            return new TestMultipartFile(name, originalFilename, contentType, content, bytesException);
-        }
-    }
-
-    private record TestMultipartFile(
-            String name,
-            String originalFilename,
-            String contentType,
-            byte[] content,
-            IOException bytesException
-    ) implements MultipartFile {
-
-        @Override
-        @NonNull
-        public String getName() {
-            return name;
-        }
-
-        @Override
-        public String getOriginalFilename() {
-            return originalFilename;
-        }
-
-        @Override
-        public String getContentType() {
-            return contentType;
-        }
-
-        @Override
-        public boolean isEmpty() {
-            return content.length == 0;
-        }
-
-        @Override
-        public long getSize() {
-            return content.length;
-        }
-
-        @Override
-        @NonNull
-        public byte [] getBytes() throws IOException {
-            if (bytesException != null) {
-                throw bytesException;
-            }
-            return content.clone();
-        }
-
-        @Override
-        @NonNull
-        public InputStream getInputStream() throws IOException {
-            return new ByteArrayInputStream(getBytes());
-        }
-
-        @Override
-        public void transferTo(@NonNull File dest) throws IOException {
-            throw new IOException("transferTo не поддерживается в тестовой реализации");
-        }
-    }
 }

@@ -11,10 +11,11 @@ import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import static io.github.sergeysenin.userservice.testutil.exception.ErrorResponseTestUtils.assertResponse;
+import static io.github.sergeysenin.userservice.testutil.exception.ErrorResponseTestUtils.createDetails;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -40,9 +41,9 @@ class ErrorResponseTest {
         @Test
         @DisplayName("должен создавать неизменяемую копию деталей при передаче непустой коллекции")
         void shouldCreateImmutableCopyWhenDetailsProvided() {
-            Map<String, String> sourceDetails = createDetails();
+            Map<String, String> sourceDetails = createDetails(DETAILS_KEY, DETAILS_VALUE);
 
-            ErrorResponse sut = createSut(VALID_CODE, CUSTOM_MESSAGE, Instant.now(), sourceDetails);
+            ErrorResponse sut = new ErrorResponse(VALID_CODE, CUSTOM_MESSAGE, Instant.now(), sourceDetails);
 
             sourceDetails.put("other", "value");
 
@@ -59,7 +60,12 @@ class ErrorResponseTest {
         void shouldUseProvidedTimestampWhenNotNull() {
             Instant expectedTimestamp = Instant.parse("2025-01-01T10:15:30Z");
 
-            ErrorResponse sut = createSut(VALID_CODE, CUSTOM_MESSAGE, expectedTimestamp, createDetails());
+            ErrorResponse sut = new ErrorResponse(
+                    VALID_CODE,
+                    CUSTOM_MESSAGE,
+                    expectedTimestamp,
+                    createDetails(DETAILS_KEY, DETAILS_VALUE)
+            );
 
             assertAll("Проверка переданного timestamp",
                     () -> assertEquals(expectedTimestamp, sut.timestamp(),
@@ -73,7 +79,12 @@ class ErrorResponseTest {
         void shouldSetCurrentTimestampWhenTimestampIsNull() {
             Instant lowerBound = Instant.now();
 
-            ErrorResponse sut = createSut(VALID_CODE, CUSTOM_MESSAGE, null, createDetails());
+            ErrorResponse sut = new ErrorResponse(
+                    VALID_CODE,
+                    CUSTOM_MESSAGE,
+                    null,
+                    createDetails(DETAILS_KEY, DETAILS_VALUE)
+            );
 
             Instant upperBound = Instant.now();
 
@@ -85,7 +96,7 @@ class ErrorResponseTest {
         @NullSource
         @MethodSource("io.github.sergeysenin.userservice.exception.dto.ErrorResponseTest#emptyDetails")
         void shouldReturnEmptyDetailsWhenDetailsNullOrEmpty(Map<String, String> details) {
-            ErrorResponse sut = createSut(VALID_CODE, CUSTOM_MESSAGE, Instant.now(), details);
+            ErrorResponse sut = new ErrorResponse(VALID_CODE, CUSTOM_MESSAGE, Instant.now(), details);
 
             assertAll("Проверка пустых деталей при отсутствии данных",
                     () -> assertTrue(sut.details().isEmpty(),
@@ -104,7 +115,7 @@ class ErrorResponseTest {
         @DisplayName("должен выбрасывать NullPointerException, если код равен null")
         void shouldThrowNullPointerExceptionWhenCodeIsNull() {
             NullPointerException exception = assertThrows(NullPointerException.class,
-                    () -> new ErrorResponse(null, CUSTOM_MESSAGE, Instant.now(), createDetails()),
+                    () -> new ErrorResponse(null, CUSTOM_MESSAGE, Instant.now(), createDetails(DETAILS_KEY, DETAILS_VALUE)),
                     "Конструктор должен проверять код на null");
 
             assertAll("Проверка данных исключения",
@@ -116,7 +127,7 @@ class ErrorResponseTest {
         @DisplayName("должен выбрасывать NullPointerException, если сообщение равно null")
         void shouldThrowNullPointerExceptionWhenMessageIsNull() {
             NullPointerException exception = assertThrows(NullPointerException.class,
-                    () -> new ErrorResponse(VALID_CODE, null, Instant.now(), createDetails()),
+                    () -> new ErrorResponse(VALID_CODE, null, Instant.now(), createDetails(DETAILS_KEY, DETAILS_VALUE)),
                     "Конструктор должен проверять сообщение на null");
 
             assertAll("Проверка данных исключения",
@@ -136,7 +147,11 @@ class ErrorResponseTest {
         void shouldBuildResponseWithProvidedMessageWhenMessageNotBlank() {
             Instant lowerBound = Instant.now();
 
-            ErrorResponse sut = createSutFromFactory(TEST_ERROR_CODE, CUSTOM_MESSAGE, createDetails());
+            ErrorResponse sut = ErrorResponse.of(
+                    TEST_ERROR_CODE,
+                    CUSTOM_MESSAGE,
+                    createDetails(DETAILS_KEY, DETAILS_VALUE)
+            );
 
             Instant upperBound = Instant.now();
 
@@ -157,7 +172,11 @@ class ErrorResponseTest {
         void shouldUseDefaultMessageWhenMessageNullOrBlank(String message) {
             Instant lowerBound = Instant.now();
 
-            ErrorResponse sut = createSutFromFactory(TEST_ERROR_CODE, message, createDetails());
+            ErrorResponse sut = ErrorResponse.of(
+                    TEST_ERROR_CODE,
+                    message,
+                    createDetails(DETAILS_KEY, DETAILS_VALUE)
+            );
 
             Instant upperBound = Instant.now();
 
@@ -174,7 +193,7 @@ class ErrorResponseTest {
         @Test
         @DisplayName("должен возвращать пустые детали, если аргумент details равен null")
         void shouldReturnEmptyDetailsWhenDetailsArgumentIsNull() {
-            ErrorResponse sut = createSutFromFactory(TEST_ERROR_CODE, CUSTOM_MESSAGE, null);
+            ErrorResponse sut = ErrorResponse.of(TEST_ERROR_CODE, CUSTOM_MESSAGE, null);
 
             assertAll("Проверка пустых деталей при отсутствии данных",
                     () -> assertTrue(sut.details().isEmpty(),
@@ -188,7 +207,7 @@ class ErrorResponseTest {
         @DisplayName("должен выбрасывать NullPointerException, если errorCode равен null")
         void shouldThrowNullPointerExceptionWhenErrorCodeIsNull() {
             NullPointerException exception = assertThrows(NullPointerException.class,
-                    () -> createSutFromFactory(null, CUSTOM_MESSAGE, createDetails()),
+                    () -> ErrorResponse.of(null, CUSTOM_MESSAGE, createDetails(DETAILS_KEY, DETAILS_VALUE)),
                     "Фабричный метод должен проверять errorCode на null");
 
             assertAll("Проверка данных исключения",
@@ -197,43 +216,4 @@ class ErrorResponseTest {
         }
     }
 
-    private Map<String, String> createDetails() {
-        Map<String, String> mutableDetails = new HashMap<>();
-        mutableDetails.put(DETAILS_KEY, DETAILS_VALUE);
-        return mutableDetails;
-    }
-
-    private ErrorResponse createSut(String code, String message, Instant timestamp, Map<String, String> details) {
-        return new ErrorResponse(code, message, timestamp, details);
-    }
-
-    private ErrorResponse createSutFromFactory(ErrorCode errorCode, String message, Map<String, String> details) {
-        return ErrorResponse.of(errorCode, message, details);
-    }
-
-    private void assertResponse(
-            ErrorResponse actualResponse,
-            String expectedCode,
-            String expectedMessage,
-            Instant lowerTimestampBound,
-            Instant upperTimestampBound,
-            Map<String, String> expectedDetails
-    ) {
-        assertAll("Проверка содержимого ErrorResponse",
-                () -> assertEquals(expectedCode, actualResponse.code(),
-                        "Код ошибки должен совпадать с ожидаемым"),
-                () -> assertEquals(expectedMessage, actualResponse.message(),
-                        "Сообщение должно совпадать с ожидаемым"),
-                () -> {
-                    Instant actualTimestamp = actualResponse.timestamp();
-                    assertNotNull(actualTimestamp, "Timestamp не должен быть null");
-                    assertAll("Проверка диапазона timestamp",
-                            () -> assertTrue(!actualTimestamp.isBefore(lowerTimestampBound),
-                                    "Timestamp не должен быть раньше нижней границы"),
-                            () -> assertTrue(!actualTimestamp.isAfter(upperTimestampBound),
-                                    "Timestamp не должен быть позже верхней границы"));
-                },
-                () -> assertEquals(expectedDetails, actualResponse.details(),
-                        "Детали должны совпадать с ожидаемыми"));
-    }
 }

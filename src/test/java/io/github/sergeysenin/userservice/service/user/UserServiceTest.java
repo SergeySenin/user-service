@@ -1,7 +1,6 @@
 package io.github.sergeysenin.userservice.service.user;
 
 import io.github.sergeysenin.userservice.entity.user.User;
-import io.github.sergeysenin.userservice.entity.user.country.Country;
 import io.github.sergeysenin.userservice.exception.type.UserNotFoundException;
 import io.github.sergeysenin.userservice.repository.user.UserRepository;
 
@@ -17,6 +16,7 @@ import org.mockito.quality.Strictness;
 
 import java.util.Optional;
 
+import static io.github.sergeysenin.userservice.testutil.user.UserTestFactory.userBuilder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -141,81 +141,4 @@ class UserServiceTest {
         return new UserService(userRepository);
     }
 
-    private static UserTestBuilder userBuilder() {
-        return new UserTestBuilder();
-    }
-
-    private static final class UserTestBuilder {
-
-        private String username;
-        private String email;
-        private String phone;
-        private String password;
-        private Boolean active;
-        private String about;
-        private String countryTitle;
-        private String city;
-        private Short experience;
-
-        private UserTestBuilder withUsername(String username) {
-            this.username = username;
-            return this;
-        }
-
-        private UserTestBuilder withEmail(String email) {
-            this.email = email;
-            return this;
-        }
-
-        private UserTestBuilder withPhone(String phone) {
-            this.phone = phone;
-            return this;
-        }
-
-        private UserTestBuilder withPassword(String password) {
-            this.password = password;
-            return this;
-        }
-
-        private UserTestBuilder withActive(Boolean active) {
-            this.active = active;
-            return this;
-        }
-
-        private UserTestBuilder withAbout(String about) {
-            this.about = about;
-            return this;
-        }
-
-        private UserTestBuilder withCountryTitle(String countryTitle) {
-            this.countryTitle = countryTitle;
-            return this;
-        }
-
-        private UserTestBuilder withCity(String city) {
-            this.city = city;
-            return this;
-        }
-
-        private UserTestBuilder withExperience(short experience) {
-            this.experience = experience;
-            return this;
-        }
-
-        private User build() {
-            Country country = countryTitle == null ? null : Country.builder().title(countryTitle).build();
-            return User.builder()
-                    .username(username)
-                    .email(email)
-                    .phone(phone)
-                    .password(password)
-                    .active(active)
-                    .aboutMe(about)
-                    .country(country)
-                    .city(city)
-                    .experience(experience)
-                    .userProfileAvatar(null)
-                    .build();
-        }
-    }
 }
