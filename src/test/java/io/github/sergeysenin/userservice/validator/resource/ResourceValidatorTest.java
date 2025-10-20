@@ -13,23 +13,18 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import org.springframework.lang.NonNull;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
+
+import static io.github.sergeysenin.userservice.testutil.resource.ResourceValidatorTestData.avatarMultipartFileBuilder;
+import static io.github.sergeysenin.userservice.testutil.resource.ResourceValidatorTestData.mockAllowedMimeTypes;
+import static io.github.sergeysenin.userservice.testutil.resource.ResourceValidatorTestData.verifyAllowedMimeTypesRequestedOnce;
+import static io.github.sergeysenin.userservice.testutil.resource.ResourceValidatorTestData.verifyNoInteractionsWithAvatarProperties;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.STRICT_STUBS)
@@ -77,17 +72,22 @@ class ResourceValidatorTest {
                     "Ожидалось исключение, если файл отсутствует"
             );
 
-            assertAll(
+            assertAll("Проверка исключения при отсутствии файла",
                     () -> assertEquals(FILE_NOT_FOUND_MESSAGE, exception.getMessage(),
                             "Сообщение должно указывать, что файл не найден"),
-                    () -> verifyNoInteractionsWithAvatarProperties()
+                    () -> verifyNoInteractionsWithAvatarProperties(avatarProperties)
             );
         }
 
         @Test
         @DisplayName("должен бросать исключение, когда файл не содержит данных")
         void shouldThrowFileEmptyWhenMultipartFileHasNoContent() {
-            MultipartFile file = multipartFileBuilder()
+            MultipartFile file = avatarMultipartFileBuilder(
+                    DEFAULT_FILE_PARAMETER,
+                    DEFAULT_ORIGINAL_FILENAME,
+                    DEFAULT_CONTENT_TYPE,
+                    DEFAULT_FILE_CONTENT
+            )
                     .withSize(0L)
                     .build();
             ResourceValidator sut = createSut();
@@ -98,10 +98,10 @@ class ResourceValidatorTest {
                     "Ожидалось исключение при отсутствии данных файла"
             );
 
-            assertAll(
+            assertAll("Проверка исключения при пустом файле",
                     () -> assertEquals(FILE_EMPTY_MESSAGE, exception.getMessage(),
                             "Сообщение должно указывать на пустой файл"),
-                    () -> verifyNoInteractionsWithAvatarProperties()
+                    () -> verifyNoInteractionsWithAvatarProperties(avatarProperties)
             );
         }
     }
@@ -113,7 +113,12 @@ class ResourceValidatorTest {
         @Test
         @DisplayName("должен бросать исключение, когда оригинальное имя отсутствует")
         void shouldThrowMissingFilenameWhenOriginalFilenameIsNull() {
-            MultipartFile file = multipartFileBuilder()
+            MultipartFile file = avatarMultipartFileBuilder(
+                    DEFAULT_FILE_PARAMETER,
+                    DEFAULT_ORIGINAL_FILENAME,
+                    DEFAULT_CONTENT_TYPE,
+                    DEFAULT_FILE_CONTENT
+            )
                     .withOriginalFilename(null)
                     .build();
             ResourceValidator sut = createSut();
@@ -124,21 +129,26 @@ class ResourceValidatorTest {
                     "Ожидалось исключение при отсутствии имени файла"
             );
 
-            assertAll(
+            assertAll("Проверка исключения при отсутствии имени файла",
                     () -> assertEquals(FILENAME_MISSING_MESSAGE, exception.getMessage(),
                             "Сообщение должно указывать, что имя файла не задано"),
-                    () -> verifyNoInteractionsWithAvatarProperties()
+                    () -> verifyNoInteractionsWithAvatarProperties(avatarProperties)
             );
         }
 
         @Test
         @DisplayName("должен бросать исключение, когда невозможно определить расширение")
         void shouldThrowExtensionUndeterminedWhenOriginalFilenameHasNoDot() {
-            MultipartFile file = multipartFileBuilder()
+            MultipartFile file = avatarMultipartFileBuilder(
+                    DEFAULT_FILE_PARAMETER,
+                    DEFAULT_ORIGINAL_FILENAME,
+                    DEFAULT_CONTENT_TYPE,
+                    DEFAULT_FILE_CONTENT
+            )
                     .withOriginalFilename("avatar")
                     .withContentType(AvatarProperties.MIME_TYPE_JPEG)
                     .build();
-            mockAllowedMimeTypes(DEFAULT_ALLOWED_MIME_TYPES);
+            mockAllowedMimeTypes(avatarProperties, DEFAULT_ALLOWED_MIME_TYPES);
             ResourceValidator sut = createSut();
 
             DataValidationException exception = assertThrows(
@@ -147,10 +157,10 @@ class ResourceValidatorTest {
                     "Ожидалось исключение, если расширение невозможно определить"
             );
 
-            assertAll(
+            assertAll("Проверка исключения при отсутствии расширения",
                     () -> assertEquals(EXTENSION_UNDETERMINED_MESSAGE, exception.getMessage(),
                             "Сообщение должно указывать на недоступность расширения"),
-                    () -> verifyAllowedMimeTypesRequestedOnce()
+                    () -> verifyAllowedMimeTypesRequestedOnce(avatarProperties)
             );
         }
     }
@@ -162,7 +172,12 @@ class ResourceValidatorTest {
         @Test
         @DisplayName("должен бросать исключение, когда MIME-тип отсутствует")
         void shouldThrowMimeUndeterminedWhenContentTypeIsBlank() {
-            MultipartFile file = multipartFileBuilder()
+            MultipartFile file = avatarMultipartFileBuilder(
+                    DEFAULT_FILE_PARAMETER,
+                    DEFAULT_ORIGINAL_FILENAME,
+                    DEFAULT_CONTENT_TYPE,
+                    DEFAULT_FILE_CONTENT
+            )
                     .withContentType("   ")
                     .build();
             ResourceValidator sut = createSut();
@@ -173,17 +188,22 @@ class ResourceValidatorTest {
                     "Ожидалось исключение при неопределённом MIME-типе"
             );
 
-            assertAll(
+            assertAll("Проверка исключения при неопределённом MIME",
                     () -> assertEquals(MIME_UNDETERMINED_MESSAGE, exception.getMessage(),
                             "Сообщение должно указывать на отсутствие MIME-типa"),
-                    () -> verifyNoInteractionsWithAvatarProperties()
+                    () -> verifyNoInteractionsWithAvatarProperties(avatarProperties)
             );
         }
 
         @Test
         @DisplayName("должен бросать исключение, когда MIME-тип оканчивается на слеш")
         void shouldThrowMimeInvalidWhenContentTypeEndsWithSlash() {
-            MultipartFile file = multipartFileBuilder()
+            MultipartFile file = avatarMultipartFileBuilder(
+                    DEFAULT_FILE_PARAMETER,
+                    DEFAULT_ORIGINAL_FILENAME,
+                    DEFAULT_CONTENT_TYPE,
+                    DEFAULT_FILE_CONTENT
+            )
                     .withContentType("image/")
                     .build();
             ResourceValidator sut = createSut();
@@ -194,17 +214,22 @@ class ResourceValidatorTest {
                     "Ожидалось исключение при некорректном MIME-типе"
             );
 
-            assertAll(
+            assertAll("Проверка исключения при некорректном MIME",
                     () -> assertEquals(MIME_INVALID_MESSAGE, exception.getMessage(),
                             "Сообщение должно указывать на некорректный MIME-тип"),
-                    () -> verifyNoInteractionsWithAvatarProperties()
+                    () -> verifyNoInteractionsWithAvatarProperties(avatarProperties)
             );
         }
 
         @Test
         @DisplayName("должен бросать исключение, когда MIME-тип не относится к изображениям")
         void shouldThrowMimeExpectedImageWhenContentTypeIsNotImage() {
-            MultipartFile file = multipartFileBuilder()
+            MultipartFile file = avatarMultipartFileBuilder(
+                    DEFAULT_FILE_PARAMETER,
+                    DEFAULT_ORIGINAL_FILENAME,
+                    DEFAULT_CONTENT_TYPE,
+                    DEFAULT_FILE_CONTENT
+            )
                     .withContentType("application/pdf")
                     .build();
             ResourceValidator sut = createSut();
@@ -215,21 +240,26 @@ class ResourceValidatorTest {
                     "Ожидалось исключение при не изображении"
             );
 
-            assertAll(
+            assertAll("Проверка исключения при MIME не изображения",
                     () -> assertEquals(MIME_EXPECTED_IMAGE_MESSAGE, exception.getMessage(),
                             "Сообщение должно указывать, что ожидалось изображение"),
-                    () -> verifyNoInteractionsWithAvatarProperties()
+                    () -> verifyNoInteractionsWithAvatarProperties(avatarProperties)
             );
         }
 
         @Test
         @DisplayName("должен бросать исключение, когда MIME-тип отсутствует в списке разрешённых")
         void shouldThrowMimeNotAllowedWhenContentTypeIsMissingInAllowList() {
-            MultipartFile file = multipartFileBuilder()
+            MultipartFile file = avatarMultipartFileBuilder(
+                    DEFAULT_FILE_PARAMETER,
+                    DEFAULT_ORIGINAL_FILENAME,
+                    DEFAULT_CONTENT_TYPE,
+                    DEFAULT_FILE_CONTENT
+            )
                     .withOriginalFilename("photo.tiff")
                     .withContentType("image/tiff")
                     .build();
-            mockAllowedMimeTypes(DEFAULT_ALLOWED_MIME_TYPES);
+            mockAllowedMimeTypes(avatarProperties, DEFAULT_ALLOWED_MIME_TYPES);
             ResourceValidator sut = createSut();
 
             DataValidationException exception = assertThrows(
@@ -238,10 +268,10 @@ class ResourceValidatorTest {
                     "Ожидалось исключение при недопустимом MIME-типе"
             );
 
-            assertAll(
+            assertAll("Проверка исключения при недопустимом MIME",
                     () -> assertEquals(MIME_NOT_ALLOWED_MESSAGE, exception.getMessage(),
                             "Сообщение должно указывать на недопустимый MIME-тип"),
-                    () -> verifyAllowedMimeTypesRequestedOnce()
+                    () -> verifyAllowedMimeTypesRequestedOnce(avatarProperties)
             );
         }
     }
@@ -249,11 +279,16 @@ class ResourceValidatorTest {
     @Test
     @DisplayName("должен бросать исключение, когда список разрешённых MIME-типов пуст")
     void shouldThrowMimeNotAllowedWhenAllowListIsEmpty() {
-        MultipartFile file = multipartFileBuilder()
+        MultipartFile file = avatarMultipartFileBuilder(
+                DEFAULT_FILE_PARAMETER,
+                DEFAULT_ORIGINAL_FILENAME,
+                DEFAULT_CONTENT_TYPE,
+                DEFAULT_FILE_CONTENT
+        )
                 .withOriginalFilename("avatar.png")
                 .withContentType(AvatarProperties.MIME_TYPE_PNG)
                 .build();
-        mockAllowedMimeTypes(List.of());
+        mockAllowedMimeTypes(avatarProperties, List.of());
         ResourceValidator sut = createSut();
 
         DataValidationException exception = assertThrows(
@@ -262,10 +297,10 @@ class ResourceValidatorTest {
                 "Ожидалось исключение при пустом списке MIME-типов"
         );
 
-        assertAll(
+        assertAll("Проверка исключения при пустом списке MIME",
                 () -> assertEquals(MIME_NOT_ALLOWED_MESSAGE, exception.getMessage(),
                         "Сообщение должно указывать на недопустимый MIME-тип"),
-                () -> verifyAllowedMimeTypesRequestedOnce()
+                () -> verifyAllowedMimeTypesRequestedOnce(avatarProperties)
         );
     }
 
@@ -276,11 +311,16 @@ class ResourceValidatorTest {
         @Test
         @DisplayName("должен бросать исключение, когда расширение не поддерживается")
         void shouldThrowUnsupportedExtensionWhenExtensionIsNotSupported() {
-            MultipartFile file = multipartFileBuilder()
+            MultipartFile file = avatarMultipartFileBuilder(
+                    DEFAULT_FILE_PARAMETER,
+                    DEFAULT_ORIGINAL_FILENAME,
+                    DEFAULT_CONTENT_TYPE,
+                    DEFAULT_FILE_CONTENT
+            )
                     .withOriginalFilename("avatar.gif")
                     .withContentType(AvatarProperties.MIME_TYPE_PNG)
                     .build();
-            mockAllowedMimeTypes(DEFAULT_ALLOWED_MIME_TYPES);
+            mockAllowedMimeTypes(avatarProperties, DEFAULT_ALLOWED_MIME_TYPES);
             ResourceValidator sut = createSut();
 
             DataValidationException exception = assertThrows(
@@ -289,21 +329,26 @@ class ResourceValidatorTest {
                     "Ожидалось исключение для неподдерживаемого расширения"
             );
 
-            assertAll(
+            assertAll("Проверка исключения при неподдерживаемом расширении",
                     () -> assertEquals(EXTENSION_UNSUPPORTED_MESSAGE, exception.getMessage(),
                             "Сообщение должно указывать на неподдерживаемое расширение"),
-                    () -> verifyAllowedMimeTypesRequestedOnce()
+                    () -> verifyAllowedMimeTypesRequestedOnce(avatarProperties)
             );
         }
 
         @Test
         @DisplayName("должен бросать исключение, когда расширение не соответствует MIME-типу")
         void shouldThrowExtensionMimeMismatchWhenExtensionDoesNotMatchMime() {
-            MultipartFile file = multipartFileBuilder()
+            MultipartFile file = avatarMultipartFileBuilder(
+                    DEFAULT_FILE_PARAMETER,
+                    DEFAULT_ORIGINAL_FILENAME,
+                    DEFAULT_CONTENT_TYPE,
+                    DEFAULT_FILE_CONTENT
+            )
                     .withOriginalFilename("avatar.jpg")
                     .withContentType(AvatarProperties.MIME_TYPE_PNG)
                     .build();
-            mockAllowedMimeTypes(DEFAULT_ALLOWED_MIME_TYPES);
+            mockAllowedMimeTypes(avatarProperties, DEFAULT_ALLOWED_MIME_TYPES);
             ResourceValidator sut = createSut();
 
             DataValidationException exception = assertThrows(
@@ -312,10 +357,10 @@ class ResourceValidatorTest {
                     "Ожидалось исключение при несоответствии расширения MIME"
             );
 
-            assertAll(
+            assertAll("Проверка исключения при конфликте MIME и расширения",
                     () -> assertEquals(EXTENSION_MIME_MISMATCH_MESSAGE, exception.getMessage(),
                             "Сообщение должно указывать на конфликт MIME и расширения"),
-                    () -> verifyAllowedMimeTypesRequestedOnce()
+                    () -> verifyAllowedMimeTypesRequestedOnce(avatarProperties)
             );
         }
     }
@@ -327,150 +372,49 @@ class ResourceValidatorTest {
         @Test
         @DisplayName("должен возвращать 'jpg' для JPEG-файла с верхним регистром")
         void shouldReturnJpgWhenJpegFileHasUpperCaseExtension() {
-            MultipartFile file = multipartFileBuilder()
+            MultipartFile file = avatarMultipartFileBuilder(
+                    DEFAULT_FILE_PARAMETER,
+                    DEFAULT_ORIGINAL_FILENAME,
+                    DEFAULT_CONTENT_TYPE,
+                    DEFAULT_FILE_CONTENT
+            )
                     .withOriginalFilename("A.JPEG")
                     .withContentType(AvatarProperties.MIME_TYPE_JPEG)
                     .build();
-            mockAllowedMimeTypes(DEFAULT_ALLOWED_MIME_TYPES);
+            mockAllowedMimeTypes(avatarProperties, DEFAULT_ALLOWED_MIME_TYPES);
             ResourceValidator sut = createSut();
 
             String extension = sut.getValidatedExtension(file);
 
-            assertAll(
+            assertAll("Проверка успешной нормализации расширения",
                     () -> assertEquals("jpg", extension,
                             "Расширение должно нормализоваться к 'jpg' для JPEG-файла"),
-                    () -> verifyAllowedMimeTypesRequestedOnce()
+                    () -> verifyAllowedMimeTypesRequestedOnce(avatarProperties)
             );
         }
 
         @Test
         @DisplayName("должен возвращать 'jpg' при fallback по MIME 'image/jpg'")
         void shouldReturnJpgWhenFallbackMimeTypeProvided() {
-            MultipartFile file = multipartFileBuilder()
+            MultipartFile file = avatarMultipartFileBuilder(
+                    DEFAULT_FILE_PARAMETER,
+                    DEFAULT_ORIGINAL_FILENAME,
+                    DEFAULT_CONTENT_TYPE,
+                    DEFAULT_FILE_CONTENT
+            )
                     .withOriginalFilename("a.jpeg")
                     .withContentType("image/jpg")
                     .build();
-            mockAllowedMimeTypes(List.of("image/jpg"));
+            mockAllowedMimeTypes(avatarProperties, List.of("image/jpg"));
             ResourceValidator sut = createSut();
 
             String extension = sut.getValidatedExtension(file);
 
-            assertAll(
+            assertAll("Проверка нормализации расширения при fallback MIME",
                     () -> assertEquals("jpg", extension,
                             "Расширение должно быть 'jpg' при допустимом MIME 'image/jpg'"),
-                    () -> verifyAllowedMimeTypesRequestedOnce()
+                    () -> verifyAllowedMimeTypesRequestedOnce(avatarProperties)
             );
-        }
-    }
-
-    private void mockAllowedMimeTypes(List<String> allowedMimeTypes) {
-        when(avatarProperties.allowedMimeTypes()).thenReturn(allowedMimeTypes);
-    }
-
-    private void verifyAllowedMimeTypesRequestedOnce() {
-        verify(avatarProperties).allowedMimeTypes();
-        verifyNoMoreInteractions(avatarProperties);
-    }
-
-    private void verifyNoInteractionsWithAvatarProperties() {
-        verifyNoInteractions(avatarProperties);
-    }
-
-    private static MultipartFileBuilder multipartFileBuilder() {
-        return new MultipartFileBuilder();
-    }
-
-    private static final class MultipartFileBuilder {
-
-        private String name = DEFAULT_FILE_PARAMETER;
-        private String originalFilename = DEFAULT_ORIGINAL_FILENAME;
-        private String contentType = DEFAULT_CONTENT_TYPE;
-        private byte[] content = DEFAULT_FILE_CONTENT;
-        private boolean empty = false;
-        private long size = DEFAULT_FILE_SIZE;
-
-        private MultipartFileBuilder withOriginalFilename(String value) {
-            this.originalFilename = value;
-            return this;
-        }
-
-        private MultipartFileBuilder withContentType(String value) {
-            this.contentType = value;
-            return this;
-        }
-
-        private MultipartFileBuilder withEmpty(boolean value) {
-            this.empty = value;
-            return this;
-        }
-
-        private MultipartFileBuilder withSize(long value) {
-            this.size = value;
-            return this;
-        }
-
-        private MultipartFile build() {
-            return new TestMultipartFile(
-                    name,
-                    originalFilename,
-                    contentType,
-                    content,
-                    empty,
-                    size
-            );
-        }
-    }
-
-    private record TestMultipartFile(
-            String name,
-            String originalFilename,
-            String contentType,
-            byte[] content,
-            boolean empty,
-            long size
-    ) implements MultipartFile {
-
-        @Override
-        @NonNull
-        public String getName() {
-            return name;
-        }
-
-        @Override
-        public String getOriginalFilename() {
-            return originalFilename;
-        }
-
-        @Override
-        public String getContentType() {
-            return contentType;
-        }
-
-        @Override
-        public boolean isEmpty() {
-            return empty;
-        }
-
-        @Override
-        public long getSize() {
-            return size;
-        }
-
-        @Override
-        @NonNull
-        public byte[] getBytes() {
-            return content.clone();
-        }
-
-        @Override
-        @NonNull
-        public InputStream getInputStream() {
-            return new ByteArrayInputStream(content);
-        }
-
-        @Override
-        public void transferTo(@NonNull File dest) throws IOException {
-            throw new IOException("transferTo не поддерживается в тестовой реализации");
         }
     }
 }

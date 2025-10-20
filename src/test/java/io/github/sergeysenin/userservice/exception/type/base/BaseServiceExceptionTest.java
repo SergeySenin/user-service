@@ -204,11 +204,7 @@ class BaseServiceExceptionTest {
         @DisplayName("должен создавать ErrorResponse с актуальными данными")
         void shouldBuildErrorResponseWithCurrentState() {
             var details = createDetails();
-            var sut = createSutWithDetails(
-                    TEST_ERROR_CODE,
-                    CUSTOM_MESSAGE,
-                    details
-            );
+            var sut = createSutWithDetails(TEST_ERROR_CODE, CUSTOM_MESSAGE, details);
 
             var lowerTimestampBound = Instant.now();
 

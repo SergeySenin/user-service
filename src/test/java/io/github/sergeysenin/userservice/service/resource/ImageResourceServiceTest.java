@@ -19,14 +19,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import static io.github.sergeysenin.userservice.testutil.resource.ImageResourceServiceTestUtils.thumbnailBuilderMock;
+
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -56,7 +58,7 @@ class ImageResourceServiceTest {
             final var sut = createSut();
 
             try (MockedStatic<Thumbnails> thumbnails = Mockito.mockStatic(Thumbnails.class)) {
-                final var builder = mockBuilder();
+                final var builder = thumbnailBuilderMock();
                 thumbnails.when(() -> Thumbnails.of(any(InputStream.class))).thenReturn(builder);
                 when(builder.size(MAX_SIDE, MAX_SIDE)).thenReturn(builder);
                 when(builder.outputFormat(FORMAT)).thenReturn(builder);
@@ -86,7 +88,7 @@ class ImageResourceServiceTest {
             final var sut = createSut();
 
             try (MockedStatic<Thumbnails> thumbnails = Mockito.mockStatic(Thumbnails.class)) {
-                final var builder = mockBuilder();
+                final var builder = thumbnailBuilderMock();
                 thumbnails.when(() -> Thumbnails.of(any(InputStream.class))).thenReturn(builder);
                 when(builder.size(MAX_SIDE, MAX_SIDE)).thenReturn(builder);
                 when(builder.outputFormat(FORMAT)).thenReturn(builder);
@@ -99,7 +101,7 @@ class ImageResourceServiceTest {
                         "Ожидалось исключение при ошибке Thumbnailator"
                 );
 
-                assertAll(
+                assertAll("Проверка данных исключения Thumbnailator",
                         () -> assertEquals(ERROR_MESSAGE, exception.getMessage(),
                                 "Сообщение должно указывать на ошибку изменения размера"),
                         () -> assertEquals(ioException, exception.getCause(),
@@ -130,7 +132,7 @@ class ImageResourceServiceTest {
                         "Ожидалось исключение при ошибке Thumbnailator"
                 );
 
-                assertAll(
+                assertAll("Проверка исключения при runtime-ошибке Thumbnailator",
                         () -> assertEquals(ERROR_MESSAGE, exception.getMessage(),
                                 "Сообщение должно указывать на ошибку изменения размера"),
                         () -> assertEquals(runtimeException, exception.getCause(),
@@ -141,10 +143,5 @@ class ImageResourceServiceTest {
                 thumbnails.verifyNoMoreInteractions();
             }
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Thumbnails.Builder<InputStream> mockBuilder() {
-        return mock(Thumbnails.Builder.class);
     }
 }

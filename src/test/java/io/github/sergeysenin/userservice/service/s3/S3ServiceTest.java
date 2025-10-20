@@ -26,10 +26,11 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequ
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
+
+import static io.github.sergeysenin.userservice.testutil.net.UrlTestUtils.createUrl;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -100,7 +101,7 @@ class S3ServiceTest {
                     "Ожидалось исключение при пустом ключе"
             );
 
-            assertAll(
+            assertAll("Проверка исключения при пустом ключе",
                     () -> assertEquals(EMPTY_KEY_MESSAGE, exception.getMessage(),
                             "Сообщение должно указывать на пустой ключ"),
                     () -> verifyNoInteractions(s3Client, s3Presigner)
@@ -118,7 +119,7 @@ class S3ServiceTest {
                     "Ожидалось исключение при null содержимом"
             );
 
-            assertAll(
+            assertAll("Проверка исключения при null содержимом",
                     () -> assertEquals(EMPTY_CONTENT_MESSAGE, exception.getMessage(),
                             "Сообщение должно указывать на пустое содержимое"),
                     () -> verifyNoInteractions(s3Client, s3Presigner)
@@ -136,7 +137,7 @@ class S3ServiceTest {
                     "Ожидалось исключение при пустом массиве"
             );
 
-            assertAll(
+            assertAll("Проверка исключения при пустом массиве",
                     () -> assertEquals(EMPTY_CONTENT_MESSAGE, exception.getMessage(),
                             "Сообщение должно указывать на пустое содержимое"),
                     () -> verifyNoInteractions(s3Client, s3Presigner)
@@ -162,7 +163,7 @@ class S3ServiceTest {
                 storedBytes = stream.readAllBytes();
             }
 
-            assertAll(
+            assertAll("Проверка параметров запроса на сохранение",
                     () -> assertEquals(BUCKET_NAME, capturedRequest.bucket(),
                             "Запрос должен содержать корректное имя bucket"),
                     () -> assertEquals(VALID_KEY, capturedRequest.key(),
@@ -177,8 +178,7 @@ class S3ServiceTest {
         void shouldThrowFileStorageExceptionWhenS3ClientFailsToStoreObject() {
             S3Service sut = createSut();
             SdkException sdkException = mock(SdkException.class);
-            when(s3Client.putObject(any(PutObjectRequest.class), any(RequestBody.class)))
-                    .thenThrow(sdkException);
+            when(s3Client.putObject(any(PutObjectRequest.class), any(RequestBody.class))).thenThrow(sdkException);
 
             FileStorageException exception = assertThrows(
                     FileStorageException.class,
@@ -189,7 +189,7 @@ class S3ServiceTest {
             verify(s3Client).putObject(any(PutObjectRequest.class), any(RequestBody.class));
             verifyNoMoreInteractions(s3Client, s3Presigner);
 
-            assertAll(
+            assertAll("Проверка данных исключения при ошибке сохранения",
                     () -> assertEquals(SAVE_ERROR_PREFIX + VALID_KEY, exception.getMessage(),
                             "Сообщение должно содержать ключ объекта"),
                     () -> assertEquals(sdkException, exception.getCause(),
@@ -213,7 +213,7 @@ class S3ServiceTest {
                     "Ожидалось исключение при пустом ключе"
             );
 
-            assertAll(
+            assertAll("Проверка исключения при пустом ключе удаления",
                     () -> assertEquals(EMPTY_KEY_MESSAGE, exception.getMessage(),
                             "Сообщение должно указывать на пустой ключ"),
                     () -> verifyNoInteractions(s3Client, s3Presigner)
@@ -232,7 +232,7 @@ class S3ServiceTest {
             verifyNoMoreInteractions(s3Client, s3Presigner);
 
             DeleteObjectRequest capturedRequest = requestCaptor.getValue();
-            assertAll(
+            assertAll("Проверка параметров запроса на удаление",
                     () -> assertEquals(BUCKET_NAME, capturedRequest.bucket(),
                             "Запрос должен содержать корректное имя bucket"),
                     () -> assertEquals(VALID_KEY, capturedRequest.key(),
@@ -256,7 +256,7 @@ class S3ServiceTest {
             verify(s3Client).deleteObject(any(DeleteObjectRequest.class));
             verifyNoMoreInteractions(s3Client, s3Presigner);
 
-            assertAll(
+            assertAll("Проверка данных исключения при ошибке удаления",
                     () -> assertEquals(DELETE_ERROR_PREFIX + VALID_KEY, exception.getMessage(),
                             "Сообщение должно содержать ключ объекта"),
                     () -> assertEquals(sdkException, exception.getCause(),
@@ -280,7 +280,7 @@ class S3ServiceTest {
                     "Ожидалось исключение при пустом ключе"
             );
 
-            assertAll(
+            assertAll("Проверка исключения при пустом ключе пресайна",
                     () -> assertEquals(EMPTY_KEY_MESSAGE, exception.getMessage(),
                             "Сообщение должно указывать на пустой ключ"),
                     () -> verifyNoInteractions(s3Client, s3Presigner)
@@ -306,7 +306,7 @@ class S3ServiceTest {
             GetObjectPresignRequest capturedRequest = presignCaptor.getValue();
             GetObjectRequest getObjectRequest = capturedRequest.getObjectRequest();
 
-            assertAll(
+            assertAll("Проверка параметров пресайна",
                     () -> assertEquals(PRESIGNED_URL, result,
                             "Метод должен вернуть URL, полученный от пресайнера"),
                     () -> assertEquals(BUCKET_NAME, getObjectRequest.bucket(),
@@ -323,8 +323,7 @@ class S3ServiceTest {
         void shouldThrowFileStorageExceptionWhenPresignerFails() {
             S3Service sut = createSut();
             SdkException sdkException = mock(SdkException.class);
-            when(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class)))
-                    .thenThrow(sdkException);
+            when(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class))).thenThrow(sdkException);
 
             FileStorageException exception = assertThrows(
                     FileStorageException.class,
@@ -335,20 +334,12 @@ class S3ServiceTest {
             verify(s3Presigner).presignGetObject(any(GetObjectPresignRequest.class));
             verifyNoMoreInteractions(s3Client, s3Presigner);
 
-            assertAll(
+            assertAll("Проверка данных исключения при ошибке пресайна",
                     () -> assertEquals(PRESIGN_ERROR_PREFIX + VALID_KEY, exception.getMessage(),
                             "Сообщение должно содержать ключ объекта"),
                     () -> assertEquals(sdkException, exception.getCause(),
                             "Причина исключения должна ссылаться на исходную ошибку")
             );
-        }
-    }
-
-    private static URL createUrl(String value) {
-        try {
-            return new URL(value);
-        } catch (MalformedURLException exception) {
-            throw new IllegalArgumentException("Неверный формат URL для тестовых данных", exception);
         }
     }
 }

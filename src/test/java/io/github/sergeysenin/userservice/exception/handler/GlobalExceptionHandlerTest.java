@@ -27,9 +27,11 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -258,7 +260,7 @@ class GlobalExceptionHandlerTest {
                     new org.hibernate.exception.ConstraintViolationException(
                             "Ошибка ограничения",
                             new SQLException("SQL state"),
-                            "  "
+                            "   "
                     );
 
             GlobalExceptionHandler sut = createSut();
@@ -530,7 +532,7 @@ class GlobalExceptionHandlerTest {
     }
 
     private Set<ConstraintViolation<?>> orderedViolations(ConstraintViolationStub... violations) {
-        return new LinkedHashSet<>(java.util.List.of(violations));
+        return new LinkedHashSet<>(List.of(violations));
     }
 
     private static class OrderedConstraintViolationException extends ConstraintViolationException {
@@ -636,9 +638,8 @@ class GlobalExceptionHandlerTest {
 
     private record SimplePath(String representation) implements Path {
         @Override
-        @NonNull
-        public Iterator<Node> iterator() {
-            return java.util.Collections.emptyIterator();
+        public @NonNull Iterator<Node> iterator() {
+            return Collections.emptyIterator();
         }
 
         @Override
