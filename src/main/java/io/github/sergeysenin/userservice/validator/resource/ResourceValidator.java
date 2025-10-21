@@ -78,7 +78,6 @@ public class ResourceValidator {
         }
 
         Set<String> allowedMimeTypes = Set.copyOf(avatarProperties.allowedMimeTypes());
-
         if (allowedMimeTypes.isEmpty() || !allowedMimeTypes.contains(normalizedContentType)) {
             throw new DataValidationException("Недопустимый MIME-тип файла");
         }
@@ -100,7 +99,6 @@ public class ResourceValidator {
         );
 
         String canonicalMimeExtension = EXTENSION_NORMALIZATION.getOrDefault(mimeBasedExtension, mimeBasedExtension);
-
         if (!canonicalExtension.equals(canonicalMimeExtension)) {
             throw new DataValidationException("Расширение файла не соответствует MIME-типу");
         }
