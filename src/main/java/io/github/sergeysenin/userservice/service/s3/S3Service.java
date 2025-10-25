@@ -28,12 +28,13 @@ public class S3Service {
     private final S3Presigner s3Presigner;
     private final S3Properties s3Properties;
 
-    public void storeObject(String s3ObjectKey, byte[] objectData) {
+    public void storeObject(String s3ObjectKey, byte[] objectData, String contentType) {
         requireKey(s3ObjectKey);
         requireData(objectData);
+        requireContentType(contentType);
 
         try {
-            PutObjectRequest request = buildPutObjectRequest(s3Properties.bucketName(), s3ObjectKey);
+            PutObjectRequest request = buildPutObjectRequest(s3Properties.bucketName(), s3ObjectKey, contentType);
             s3Client.putObject(request, RequestBody.fromBytes(objectData));
 
             log.debug("S3 объект сохранен: bucket={}, key={}, size={} bytes",
@@ -84,10 +85,11 @@ public class S3Service {
         }
     }
 
-    private PutObjectRequest buildPutObjectRequest(String bucket, String key) {
+    private PutObjectRequest buildPutObjectRequest(String bucket, String key, String contentType) {
         return PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(key)
+                .contentType(contentType)
                 .build();
     }
 
@@ -124,6 +126,12 @@ public class S3Service {
     private static void requireData(byte[] data) {
         if (data == null || data.length == 0) {
             throw new FileStorageException("Пустое содержимое файла");
+        }
+    }
+
+    private static void requireContentType(String contentType) {
+        if (contentType == null || contentType.isBlank()) {
+            throw new FileStorageException("Не указан MIME-тип объекта");
         }
     }
 }

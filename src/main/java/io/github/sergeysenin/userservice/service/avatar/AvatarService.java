@@ -14,6 +14,7 @@ import io.github.sergeysenin.userservice.service.avatar.generator.AvatarFileName
 import io.github.sergeysenin.userservice.service.resource.ResourceService;
 import io.github.sergeysenin.userservice.service.s3.S3Service;
 import io.github.sergeysenin.userservice.service.user.UserService;
+import io.github.sergeysenin.userservice.validator.resource.ResourceValidationResult;
 import io.github.sergeysenin.userservice.validator.resource.ResourceValidator;
 
 import lombok.RequiredArgsConstructor;
@@ -46,11 +47,11 @@ public class AvatarService {
 
         var user = userService.getUserByIdOrThrow(userId);
 
-        String extension = resourceValidator.getValidatedExtension(file);
+        var resourceMetadata = resourceValidator.validateResource(file);
         byte[] originalBytes = readFileBytes(file, userId);
 
         var oldAvatarPaths = avatarMapper.toDto(user.getUserProfileAvatar());
-        var newAvatarPaths = uploadResizedVersions(userId, originalBytes, extension);
+        var newAvatarPaths = uploadResizedVersions(userId, originalBytes, resourceMetadata);
 
         applyAvatarToUser(user, newAvatarPaths);
 
@@ -120,7 +121,13 @@ public class AvatarService {
         }
     }
 
-    private AvatarObjectPathsDto uploadResizedVersions(Long userId, byte[] originalBytes, String extension) {
+    private AvatarObjectPathsDto uploadResizedVersions(
+            Long userId,
+            byte[] originalBytes,
+            ResourceValidationResult resourceMetadata
+    ) {
+        String extension = resourceMetadata.canonicalExtension();
+        String mimeType = resourceMetadata.mimeType();
         var newAvatarPaths = avatarFileNameGenerator.generateFilePaths(userId, extension);
 
         int thumbnailMaxSide = avatarProperties.sizes().thumbnail().maxSide();
@@ -129,9 +136,9 @@ public class AvatarService {
         byte[] thumbnailBytes = resourceService.resize(originalBytes, thumbnailMaxSide, extension);
         byte[] profileBytes = resourceService.resize(originalBytes, profileMaxSide, extension);
 
-        s3Service.storeObject(newAvatarPaths.thumbnailPath(), thumbnailBytes);
-        s3Service.storeObject(newAvatarPaths.profilePath(), profileBytes);
-        s3Service.storeObject(newAvatarPaths.originalPath(), originalBytes);
+        s3Service.storeObject(newAvatarPaths.thumbnailPath(), thumbnailBytes, mimeType);
+        s3Service.storeObject(newAvatarPaths.profilePath(), profileBytes, mimeType);
+        s3Service.storeObject(newAvatarPaths.originalPath(), originalBytes, mimeType);
 
         return newAvatarPaths;
     }

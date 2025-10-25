@@ -48,7 +48,7 @@ public class ResourceValidator {
 
     private static final Set<String> SUPPORTED_CANONICAL_EXTENSIONS = Set.copyOf(EXTENSION_NORMALIZATION.values());
 
-    public String getValidatedExtension(MultipartFile file) {
+    public ResourceValidationResult validateResource(MultipartFile file) {
         if (file == null) {
             throw new DataValidationException("Файл не найден");
         }
@@ -103,6 +103,6 @@ public class ResourceValidator {
             throw new DataValidationException("Расширение файла не соответствует MIME-типу");
         }
 
-        return canonicalExtension;
+        return new ResourceValidationResult(canonicalExtension, normalizedContentType);
     }
 }

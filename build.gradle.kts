@@ -88,6 +88,7 @@ dependencies {
      */
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv")
     implementation("net.coobird:thumbnailator:0.4.20")
+    runtimeOnly("com.github.usefulness:webp-imageio:0.10.2")
 
     /**
      * Developer Tooling (Annotation Processors)
