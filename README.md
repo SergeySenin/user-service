@@ -99,7 +99,7 @@ Liquibase использует master-changelog `db/changelog/db.changelog-maste
 ненулевой список MIME и предоставляет дефолты (storage path, JPEG/PNG/WebP, размеры 170 и 1080 пикселей).
 【F:src/main/resources/application-local.yaml†L23-L34】
 【F:src/main/resources/application-prod.yaml†L21-L28】
-【F:src/main/java/io/github/sergeysenin/userservice/config/s3/S3Properties.java†L13-L72】
+【F:src/main/java/io/github/sergeysenin/userservice/config/avatar/AvatarProperties.java†L17-L105】
 【F:docker-compose.yml†L7-L75】
 
 ### Настройки S3
