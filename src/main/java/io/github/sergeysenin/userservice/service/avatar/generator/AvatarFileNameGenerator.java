@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import java.util.function.Supplier;
 
 @Component
 @RequiredArgsConstructor
@@ -18,10 +19,11 @@ public class AvatarFileNameGenerator {
     private static final String PROFILE_VERSION = "profile";
 
     private final AvatarProperties avatarProperties;
+    private final Supplier<UUID> uuidSupplier;
 
     public AvatarObjectPathsDto generateFilePaths(Long userId, String fileExtension) {
         String storagePath = avatarProperties.storagePath();
-        String avatarIdentifier = UUID.randomUUID().toString();
+        String avatarIdentifier = uuidSupplier.get().toString();
 
         String originalPath = buildPath(storagePath, userId, avatarIdentifier, ORIGINAL_VERSION, fileExtension);
         String thumbnailPath = buildPath(storagePath, userId, avatarIdentifier, THUMBNAIL_VERSION, fileExtension);
