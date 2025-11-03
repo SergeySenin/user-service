@@ -55,6 +55,12 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
     /**
+     * Database Driver & Migrations
+     */
+    implementation("org.liquibase:liquibase-core")
+    runtimeOnly("org.postgresql:postgresql")
+
+    /**
      * Caching / Redis
      */
     implementation("org.springframework.boot:spring-boot-starter-data-redis") {
@@ -63,15 +69,10 @@ dependencies {
     implementation("redis.clients:jedis")
 
     /**
-     * Database Driver & Migrations
+     * Security / OAuth2 Resource Server
      */
-    implementation("org.liquibase:liquibase-core")
-    runtimeOnly("org.postgresql:postgresql")
-
-    /**
-     * OpenAPI / Docs
-     */
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
 
     /**
      * Spring Cloud
@@ -79,9 +80,9 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
 
     /**
-     * Object Storage (AWS SDK v2)
+     * Messaging / Kafka
      */
-    implementation("software.amazon.awssdk:s3")
+    implementation("org.springframework.kafka:spring-kafka")
 
     /**
      * Serialization / Media
@@ -89,6 +90,16 @@ dependencies {
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv")
     implementation("net.coobird:thumbnailator:0.4.20")
     runtimeOnly("com.github.usefulness:webp-imageio:0.10.2")
+
+    /**
+     * Object Storage (AWS SDK v2)
+     */
+    implementation("software.amazon.awssdk:s3")
+
+    /**
+     * OpenAPI / Docs
+     */
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
 
     /**
      * Developer Tooling (Annotation Processors)
@@ -105,12 +116,15 @@ dependencies {
      * Testing
      */
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("org.springframework.kafka:spring-kafka-test")
 
     /**
      * Testcontainers
      */
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
+    testImplementation("org.testcontainers:kafka")
     testImplementation("com.redis.testcontainers:testcontainers-redis-junit:1.6.4")
 }
 
@@ -186,7 +200,7 @@ tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     violationRules {
         rule {
             limit {
-                minimum = 0.0.toBigDecimal() // Временное отключение (сделать 1.0 после первых модульных тестов).
+                minimum = 0.0.toBigDecimal()
             }
         }
     }
