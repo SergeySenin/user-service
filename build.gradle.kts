@@ -128,54 +128,6 @@ dependencies {
     testImplementation("com.redis:testcontainers-redis:2.2.4")
 }
 
-tasks.test {
-    useJUnitPlatform()
-    systemProperty("spring.profiles.active", "test")
-    finalizedBy(tasks.named("jacocoTestReport"))
-}
-
-tasks.named("check") {
-    dependsOn(
-        tasks.named("jacocoTestCoverageVerification"),
-        tasks.named("checkstyleMain"),
-        tasks.named("checkstyleTest")
-    )
-}
-
-fun configureCheckstyleTask(
-    taskProvider: TaskProvider<Checkstyle>,
-    stylesheet: RegularFile,
-    excludePatterns: List<String>
-) {
-    taskProvider.configure {
-        reports {
-            xml.required.set(true)
-            html.required.set(true)
-            html.stylesheet = resources.text.fromFile(stylesheet)
-        }
-
-        excludePatterns.forEach(::exclude)
-    }
-}
-
-val checkstyleStylesheet = layout.projectDirectory.file("config/checkstyle/checkstyle-noframes-severity-sorted.xsl")
-val checkstyleExcludePatterns = listOf("**/resources/**", "**/generated/**")
-val checkstyleTaskNames = listOf("checkstyleMain", "checkstyleTest")
-
-extensions.configure<CheckstyleExtension>("checkstyle") {
-    toolVersion = "12.1.1"
-    configDirectory.set(layout.projectDirectory.dir("config/checkstyle"))
-    config = resources.text.fromFile(layout.projectDirectory.file("config/checkstyle/checkstyle.xml"))
-    configProperties["checkstyle.enableExternalDtdLoad"] = "true"
-    isIgnoreFailures = false
-}
-
-checkstyleTaskNames
-    .map { tasks.named<Checkstyle>(it) }
-    .forEach { task ->
-        configureCheckstyleTask(task, checkstyleStylesheet, checkstyleExcludePatterns)
-    }
-
 jacoco {
     toolVersion = "0.8.14"
 }
@@ -198,12 +150,47 @@ tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     violationRules {
         rule {
             limit {
+                // Временное отключение (сделать 0.9 после первых модульных тестов).
                 minimum = 0.0.toBigDecimal()
             }
         }
     }
 
     configureJacocoClassDirectories(this)
+}
+
+extensions.configure<CheckstyleExtension>("checkstyle") {
+    toolVersion = "12.1.1"
+    configDirectory.set(layout.projectDirectory.dir("config/checkstyle"))
+    config = resources.text.fromFile(layout.projectDirectory.file("config/checkstyle/checkstyle.xml"))
+    configProperties["checkstyle.enableExternalDtdLoad"] = "false"
+    isIgnoreFailures = false
+}
+
+val checkstyleTaskNames = listOf("checkstyleMain", "checkstyleTest")
+val checkstyleStylesheet = layout.projectDirectory.file("config/checkstyle/checkstyle-noframes-severity-sorted.xsl")
+val checkstyleExcludePatterns = listOf("**/resources/**", "**/generated/**")
+
+checkstyleTaskNames
+    .map { tasks.named<Checkstyle>(it) }
+    .forEach { task ->
+        configureCheckstyleTask(task, checkstyleStylesheet, checkstyleExcludePatterns)
+    }
+
+tasks.test {
+    useJUnitPlatform()
+    // Вывод стандартных потоков включён — удобно видеть подробные логи тестов.
+    testLogging { showStandardStreams = true }
+    systemProperty("spring.profiles.active", "test")
+    finalizedBy(tasks.named("jacocoTestReport"))
+}
+
+tasks.named("check") {
+    dependsOn(
+        tasks.named("jacocoTestCoverageVerification"),
+        tasks.named("checkstyleMain"),
+        tasks.named("checkstyleTest")
+    )
 }
 
 fun configureJacocoClassDirectories(jacocoTask: JacocoReportBase) {
@@ -226,4 +213,20 @@ fun configureJacocoClassDirectories(jacocoTask: JacocoReportBase) {
             }
         )
     )
+}
+
+fun configureCheckstyleTask(
+    taskProvider: TaskProvider<Checkstyle>,
+    stylesheet: RegularFile,
+    excludePatterns: List<String>
+) {
+    taskProvider.configure {
+        reports {
+            xml.required.set(true)
+            html.required.set(true)
+            html.stylesheet = resources.text.fromFile(stylesheet)
+        }
+
+        excludePatterns.forEach(::exclude)
+    }
 }
