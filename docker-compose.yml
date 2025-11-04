@@ -165,6 +165,8 @@ services:
       MINIO_ENDPOINT: "http://minio:9000"
       MINIO_ROOT_USER: user
       MINIO_ROOT_PASSWORD: password
+      MINIO_BUCKET: corpbucket
+      MINIO_BUCKET_POLICY: private
     networks:
       - app_network
     entrypoint:
@@ -176,7 +178,8 @@ services:
           ENDPOINT="${MINIO_ENDPOINT}"
           USERNAME="${MINIO_ROOT_USER}"
           PASSWORD="${MINIO_ROOT_PASSWORD}"
-          BUCKET="corpbucket"
+          BUCKET="${MINIO_BUCKET}"
+          POLICY="${MINIO_BUCKET_POLICY:-private}"
 
           i=0
           until /usr/bin/mc alias set "$ALIAS" "$ENDPOINT" "$USERNAME" "$PASSWORD"; do
@@ -187,8 +190,17 @@ services:
           done
 
           /usr/bin/mc mb -p "$ALIAS/$BUCKET" || true
-          /usr/bin/mc anonymous set download "$ALIAS/$BUCKET" || true
-          echo "MinIO bucket $BUCKET ready"
+
+          case "$POLICY" in
+            public|download)
+              /usr/bin/mc anonymous set download "$ALIAS/$BUCKET" || true
+              ;;
+            private|none|"")
+              /usr/bin/mc anonymous set none "$ALIAS/$BUCKET" || true
+              ;;
+          esac
+
+          echo "MinIO bucket $BUCKET policy=$POLICY"
 
 volumes:
   postgres_data:
