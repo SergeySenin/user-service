@@ -12,7 +12,7 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     networks:
       - app_network
     healthcheck:
@@ -33,7 +33,7 @@ services:
       POSTGRES_PASSWORD: password
       TZ: UTC
     volumes:
-      - keycloak_db_data:/var/lib/postgresql/data
+      - keycloak_db_data:/var/lib/postgresql
     networks:
       - app_network
     healthcheck:
@@ -51,7 +51,7 @@ services:
     depends_on:
       keycloak-db:
         condition: service_healthy
-    command: ["start", "--auto-build"]
+    command: ["start"]
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: password
@@ -60,7 +60,9 @@ services:
       KC_DB_URL_DATABASE: keycloak
       KC_DB_USERNAME: user
       KC_DB_PASSWORD: password
-      KC_HOSTNAME: "http://localhost:9090"
+      KC_HOSTNAME: "localhost"
+      KC_HOSTNAME_PORT: "9090"
+      KC_HOSTNAME_STRICT: "false"
       KC_HTTP_ENABLED: "true"
       KC_HEALTH_ENABLED: "true"
       TZ: UTC
@@ -71,7 +73,7 @@ services:
     networks:
       - app_network
     healthcheck:
-      test: ["CMD-SHELL", "bash -lc 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \"HEAD /health/ready HTTP/1.0\\r\\n\\r\\n\" >&3; head -n1 <&3 | grep -q \" 200 \"'"]
+      test: ["CMD-SHELL", "bash -lc 'exec 3<>/dev/tcp/127.0.0.1/9000; printf \"HEAD /health/ready HTTP/1.0\\r\\n\\r\\n\" >&3; head -n1 <&3 | grep -q \" 200 \"'"]
       start_period: 120s
       interval: 10s
       timeout: 5s
@@ -99,7 +101,7 @@ services:
       retries: 5
 
   kafka:
-    image: bitnami/kafka:4.1.0
+    image: bitnamilegacy/kafka:4.0.0-debian-12-r10
     container_name: kafka
     restart: unless-stopped
     stop_grace_period: 300s
@@ -130,7 +132,7 @@ services:
       retries: 5
 
   minio:
-    image: minio/minio:RELEASE.2025-10-15T17-29-55Z
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
     container_name: minio
     restart: unless-stopped
     stop_grace_period: 45s
@@ -147,7 +149,7 @@ services:
     networks:
       - app_network
     healthcheck:
-      test: ["CMD-SHELL", "bash -lc 'exec 3<>/dev/tcp/127.0.0.1/9000; printf \"HEAD /minio/health/live HTTP/1.0\\r\\n\\r\\n\" >&3; head -n1 <&3 | grep -q \" 200 \"'"]
+      test: ["CMD-SHELL", "wget -T 2 -qO- http://127.0.0.1:9000/minio/health/live >/dev/null || curl -fsS --connect-timeout 2 --max-time 4 http://127.0.0.1:9000/minio/health/live >/dev/null || exit 1"]
       start_period: 25s
       interval: 10s
       timeout: 5s
@@ -160,13 +162,6 @@ services:
     depends_on:
       minio:
         condition: service_healthy
-    environment:
-      MINIO_ALIAS: local
-      MINIO_ENDPOINT: "http://minio:9000"
-      MINIO_ROOT_USER: user
-      MINIO_ROOT_PASSWORD: password
-      MINIO_BUCKET: corpbucket
-      MINIO_BUCKET_POLICY: private
     networks:
       - app_network
     entrypoint:
@@ -174,33 +169,29 @@ services:
       - -c
       - |
           set -eu
-          ALIAS="${MINIO_ALIAS}"
-          ENDPOINT="${MINIO_ENDPOINT}"
-          USERNAME="${MINIO_ROOT_USER}"
-          PASSWORD="${MINIO_ROOT_PASSWORD}"
-          BUCKET="${MINIO_BUCKET}"
-          POLICY="${MINIO_BUCKET_POLICY:-private}"
+          ALIAS="local"
+          ENDPOINT="http://minio:9000"
+          USERNAME="user"
+          PASSWORD="password"
+          BUCKET="corpbucket"
+          POLICY="private"
 
           i=0
-          until /usr/bin/mc alias set "$ALIAS" "$ENDPOINT" "$USERNAME" "$PASSWORD"; do
-            i=$((i+1))
-            [ "$i" -ge 120 ] && echo "mc: timeout waiting for minio" >&2 && exit 1
+          until /usr/bin/mc alias set "$$ALIAS" "$$ENDPOINT" "$$USERNAME" "$$PASSWORD"; do
+            i=$$((i+1))
+            [ "$$i" -ge 120 ] && echo "mc: timeout waiting for minio" >&2 && exit 1
             echo 'mc: waiting for minio...'
             sleep 2
           done
 
-          /usr/bin/mc mb -p "$ALIAS/$BUCKET" || true
+          /usr/bin/mc mb -p "$$ALIAS/$$BUCKET" || true
 
-          case "$POLICY" in
-            public|download)
-              /usr/bin/mc anonymous set download "$ALIAS/$BUCKET" || true
-              ;;
-            private|none|"")
-              /usr/bin/mc anonymous set none "$ALIAS/$BUCKET" || true
-              ;;
+          case "$$POLICY" in
+            public|download) /usr/bin/mc anonymous set download "$$ALIAS/$$BUCKET" || true ;;
+            private|none|"") /usr/bin/mc anonymous set none "$$ALIAS/$$BUCKET" || true ;;
           esac
 
-          echo "MinIO bucket $BUCKET policy=$POLICY"
+          echo "MinIO bucket $$BUCKET policy=$$POLICY"
 
 volumes:
   postgres_data:
