@@ -12,7 +12,7 @@ import org.gradle.testing.jacoco.tasks.JacocoReportBase
 plugins {
     java
     checkstyle
-    id("org.springframework.boot") version "3.5.6"
+    id("org.springframework.boot") version "3.5.7"
     id("io.spring.dependency-management") version "1.1.7"
     jacoco
 }
@@ -38,8 +38,8 @@ dependencies {
      * Dependency Platforms (Bills Of Materials)
      */
     implementation(platform("org.springframework.cloud:spring-cloud-dependencies:2025.0.0"))
-    implementation(platform("software.amazon.awssdk:bom:2.34.5"))
-    testImplementation(platform("org.testcontainers:testcontainers-bom:1.21.3"))
+    implementation(platform("software.amazon.awssdk:bom:2.37.3"))
+    testImplementation(platform("org.testcontainers:testcontainers-bom:2.0.1"))
 
     /**
      * Core Starters: Observability / Validation / Web
@@ -88,7 +88,7 @@ dependencies {
      * Serialization / Media
      */
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv")
-    implementation("net.coobird:thumbnailator:0.4.20")
+    implementation("net.coobird:thumbnailator:0.4.21")
     runtimeOnly("com.github.usefulness:webp-imageio:0.10.2")
 
     /**
@@ -122,16 +122,14 @@ dependencies {
     /**
      * Testcontainers
      */
-    testImplementation("org.testcontainers:junit-jupiter")
-    testImplementation("org.testcontainers:postgresql")
-    testImplementation("org.testcontainers:kafka")
-    testImplementation("com.redis.testcontainers:testcontainers-redis-junit:1.6.4")
+    testImplementation("org.testcontainers:testcontainers-junit-jupiter")
+    testImplementation("org.testcontainers:testcontainers-postgresql")
+    testImplementation("org.testcontainers:testcontainers-kafka")
+    testImplementation("com.redis:testcontainers-redis:2.2.4")
 }
 
 tasks.test {
     useJUnitPlatform()
-    // Вывод стандартных потоков включён — удобно видеть подробные логи тестов.
-    testLogging { showStandardStreams = true }
     systemProperty("spring.profiles.active", "test")
     finalizedBy(tasks.named("jacocoTestReport"))
 }
@@ -165,7 +163,7 @@ val checkstyleExcludePatterns = listOf("**/resources/**", "**/generated/**")
 val checkstyleTaskNames = listOf("checkstyleMain", "checkstyleTest")
 
 extensions.configure<CheckstyleExtension>("checkstyle") {
-    toolVersion = "10.17.0"
+    toolVersion = "12.1.1"
     configDirectory.set(layout.projectDirectory.dir("config/checkstyle"))
     config = resources.text.fromFile(layout.projectDirectory.file("config/checkstyle/checkstyle.xml"))
     configProperties["checkstyle.enableExternalDtdLoad"] = "true"
@@ -179,7 +177,7 @@ checkstyleTaskNames
     }
 
 jacoco {
-    toolVersion = "0.8.13"
+    toolVersion = "0.8.14"
 }
 
 tasks.named<JacocoReport>("jacocoTestReport") {
@@ -216,7 +214,7 @@ fun configureJacocoClassDirectories(jacocoTask: JacocoReportBase) {
                 exclude(
                     "**/client/**",
                     "**/config/**",
-                    "**controller/**",
+                    "**/controller/**",
                     "**/dto/**",
                     "**/entity/**",
                     "**/exception/**",
