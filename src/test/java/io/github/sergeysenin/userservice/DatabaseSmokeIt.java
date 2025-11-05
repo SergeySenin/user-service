@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DisplayName("DatabaseSmokeIt: контекст поднимается и выполняется простой SQL")
 class DatabaseSmokeIt {
 
-    private static final String POSTGRES_IMAGE = "postgres:16.3";
+    private static final String POSTGRES_IMAGE = "postgres:18.0";
     private static final String DB_NAME = "user_service";
     private static final String DB_USERNAME = "user";
     private static final String DB_PASSWORD = "password";
