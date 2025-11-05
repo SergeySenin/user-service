@@ -23,8 +23,8 @@ spring:
 services:
   s3:
     endpoint: http://127.0.0.1:9000
-    access-key: local
-    secret-key: localpassword
+    access-key: user
+    secret-key: password
     bucket-name: corpbucket
     region: us-east-1
     url-expiration: PT120H
