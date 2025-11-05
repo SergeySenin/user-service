@@ -163,7 +163,6 @@ extensions.configure<CheckstyleExtension>("checkstyle") {
     toolVersion = "12.1.1"
     configDirectory.set(layout.projectDirectory.dir("config/checkstyle"))
     config = resources.text.fromFile(layout.projectDirectory.file("config/checkstyle/checkstyle.xml"))
-    configProperties["checkstyle.enableExternalDtdLoad"] = "false"
     isIgnoreFailures = false
 }
 
