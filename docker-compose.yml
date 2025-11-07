@@ -73,7 +73,7 @@ services:
     networks:
       - app_network
     healthcheck:
-      test: ["CMD-SHELL", "bash -lc 'exec 3<>/dev/tcp/127.0.0.1/9000; printf \"HEAD /health/ready HTTP/1.0\\r\\n\\r\\n\" >&3; head -n1 <&3 | grep -q \" 200 \"'"]
+      test: ["CMD-SHELL", "bash -lc 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \"HEAD /health/ready HTTP/1.0\\r\\n\\r\\n\" >&3; head -n1 <&3 | grep -q \" 200 \"'"]
       start_period: 120s
       interval: 10s
       timeout: 5s
