@@ -2,6 +2,11 @@ spring:
   config:
     activate:
       on-profile: prod
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:?}
   datasource:
     url: ${DB_URL:?}
     username: ${DB_USER:?}
@@ -17,6 +22,12 @@ spring:
     redis:
       host: ${REDIS_HOST:redis}
       port: ${REDIS_PORT:6379}
+
+app:
+  security:
+    jwt:
+      audience: ${KEYCLOAK_AUDIENCE:user-service}
+      user-id-claim: ${KEYCLOAK_USER_ID_CLAIM:user_id}
 
 services:
   s3:
