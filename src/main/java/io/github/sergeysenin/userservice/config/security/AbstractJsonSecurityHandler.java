@@ -30,9 +30,9 @@ abstract class AbstractJsonSecurityHandler {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
 
-        Map<String, String> details = requestUri == null
-                ? Map.of()
-                : Map.of("path", requestUri);
+        Map<String, String> details = requestUri == null ?
+                Map.of() :
+                Map.of("path", requestUri);
 
         ErrorResponse body = ErrorResponse.of(errorCode, null, details);
         objectMapper.writeValue(response.getWriter(), body);

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -70,8 +71,7 @@ public class SecurityConfig {
                                 jwt
                                         .decoder(jwtDecoder)
                                         .jwtAuthenticationConverter(jwtAuthenticationConverter)
-                        )
-                );
+                        ));
 
         return http.build();
     }
@@ -87,6 +87,7 @@ public class SecurityConfig {
     }
 
     @Bean
+    @Profile("!test")
     public JwtDecoder jwtDecoder(@Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") String issuerUri) {
         NimbusJwtDecoder jwtDecoder = JwtDecoders.fromIssuerLocation(issuerUri);
 
