@@ -11,20 +11,28 @@
   - [Модель данных](#модель-данных)
 - [Профили конфигурации](#профили-конфигурации)
 - [Переменные окружения `prod`](#переменные-окружения-prod)
+- [Keycloak и JWT](#keycloak-и-jwt)
 - [Конфигурация и параметры](#конфигурация-и-параметры)
   - [Параметры аватаров](#параметры-аватаров)
   - [Настройки S3](#настройки-s3)
+  - [Параметры безопасности](#параметры-безопасности)
   - [Логирование](#логирование)
+- [Безопасность API](#безопасность-api)
+  - [Публичные эндпойнты](#публичные-эндпойнты)
+  - [Проверка JWT](#проверка-jwt)
+  - [Методовая авторизация](#методовая-авторизация)
 - [Офлайн-прогрев](#офлайн-прогрев)
 - [Тестирование](#тестирование)
 - [OpenAPI и Swagger UI](#openapi-и-swagger-ui)
 - [Обработка ошибок](#обработка-ошибок)
-- [Формат ответа `ErrorResponse`](#формат-ответа-errorresponse)
-- [Основные коды ошибок](#основные-коды-ошибок)
+  - [Ошибки безопасности](#ошибки-безопасности)
+  - [Формат ответа `ErrorResponse`](#формат-ответа-errorresponse)
+  - [Основные коды ошибок](#основные-коды-ошибок)
 - [Полезные файлы](#полезные-файлы)
 - [Проверка зависимостей Gradle](#проверка-зависимостей-gradle)
 - [Как обновлять metadata](#как-обновлять-metadata)
-- [Ограничения](#ограничения)
+  - [Ограничения](#ограничения)
+- [P.S.](#ps)
 
 ## Быстрый старт
 
@@ -79,6 +87,7 @@
 | S3              | `S3_ENDPOINT`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET`, `S3_REGION`, `S3_URL_EXPIRATION`                                                                             | Настройка S3-совместимого хранилища, региона (`us-east-1` по умолчанию) и TTL presigned-ссылок |
 | Внешние сервисы | `PROJECT_SVC_URL`, `PAYMENT_SVC_URL`                                                                                                                                       | Базовые URL интеграций                                                                         |
 | Аватары         | `AVATAR_STORAGE_PATH`, `AVATAR_THUMBNAIL_MAX_SIDE`, `AVATAR_PROFILE_MAX_SIDE`,<br>`AVATAR_ALLOWED_MIME_TYPE_1`, `AVATAR_ALLOWED_MIME_TYPE_2`, `AVATAR_ALLOWED_MIME_TYPE_3` | Переопределение параметров хранения и валидации загрузок                                       |
+| Keycloak        | `KEYCLOAK_ISSUER_URI`, `KEYCLOAK_AUDIENCE`, `KEYCLOAK_USER_ID_CLAIM`                                                                                                       | Настройка ресурс-сервера и claim с идентификатором пользователя                                |                                                                                                |
 
 Все переменные заданы в `src/main/resources/application-prod.yaml`: обязательные отмечены оператором `:?`,
 остальные имеют дефолты. Redis по умолчанию обращается к сервису `redis` из docker-compose,
@@ -86,6 +95,22 @@
 
 Liquibase использует master-changelog `db/changelog/db.changelog-master.yaml`,
 поэтому убедитесь, что файл доступен в classpath при запуске контейнера.
+
+## Keycloak и JWT
+
+### Локальное окружение
+- Keycloak поднимается из `docker-compose.yml` и доступен на `http://localhost:9090`.
+- Realm `users` настроен с публичным клиентом `postman` (Direct Access Grants)
+  и клиентом-аудиторией `user-service`, добавляющим значение в claim `aud`.
+- Пользователи `test_user` (роль `USER`) и `admin_user` (роль `ADMIN`) предсозданы для быстрых проверок.
+- Профиль `local` в `application-local.yaml` сразу указывает:
+  `issuer-uri`, `audience` и имя claim с идентификатором пользователя (`user_id`).
+
+### Переменные окружения для prod
+- `KEYCLOAK_ISSUER_URI` — обязательный issuer realm-а; без него приложение не запустится.
+- `KEYCLOAK_AUDIENCE` — ожидаемая аудитория токена. Если клиент в Keycloak переименован, обновите переменную.
+- `KEYCLOAK_USER_ID_CLAIM` — claim с идентификатором пользователя.
+  По умолчанию `user_id`, при его отсутствии сервис читает стандартный `sub`.
 
 ## Конфигурация и параметры
 
@@ -97,14 +122,47 @@ Liquibase использует master-changelog `db/changelog/db.changelog-maste
 
 ### Настройки S3
 Секция `services.s3` описывает подключение к MinIO/AWS S3: endpoint, ключи доступа, bucket и время жизни presigned URL.
-Профиль `local` направляет на MinIO из `docker-compose.yml`, `prod` требует обязательные переменные. 
+Профиль `local` направляет на MinIO из `docker-compose.yml`, `prod` требует обязательные переменные.
 В коде значения биндятся в `S3Properties`, где нормализуется регион и задаётся дефолтное время истечения `PT120H`.
+
+### Параметры безопасности
+- `spring.security.oauth2.resourceserver.jwt.issuer-uri` — URL realm-а Keycloak.
+  В `local` зашит `http://localhost:9090/realms/users`, а в `prod` значение прокидывается через `KEYCLOAK_ISSUER_URI`.
+- `app.security.jwt.audience` — ожидаемая аудитория токена. Значение берётся из `app.security.jwt.audience`,
+  по умолчанию равно `user-service` и может быть переопределено переменной `KEYCLOAK_AUDIENCE`.
+- `app.security.jwt.user-id-claim` — имя claim для идентификатора пользователя. По умолчанию `user_id`,
+  но можно сменить через `KEYCLOAK_USER_ID_CLAIM`. При отсутствии claim используется fallback на `sub`.
+- Все параметры задаются в `application-local.yaml` и `application-prod.yaml`,
+  поэтому при обновлении настроек Keycloak достаточно поправить профиль или переменные окружения.
 
 ### Логирование
 `logback-spring.xml` настраивает асинхронный вывод в консоль с профилями `local`, `prod` и `test`.
 В `local` включён детальный DEBUG для пакета приложения и WARN для Spring/Hibernate,
 тогда как `prod` ограничивается INFO. Очередь асинхронного аппендера увеличена до
 1024 и настроена на неблокирующий режим, чтобы не тормозить обработку запросов.
+
+## Безопасность API
+
+### Публичные эндпойнты
+- `OPTIONS /**` — предзапросы браузеров.
+- `GET /actuator/health/**`, `GET /actuator/info` — мониторинг состояния.
+- `/v3/api-docs/**`, `/swagger-ui/**`, `/swagger-ui.html` — документация.
+- Все остальные эндпойнты требуют валидного Bearer-токена.
+
+### Проверка JWT
+- Приложение настроено как OAuth2 Resource Server и валидирует токены локально через `JwtDecoder`.
+- Проверяются подпись, срок действия, issuer и аудитория (`aud`) с помощью `AudienceValidator`.
+- Claim `roles` преобразуется в `ROLE_*` через `JwtGrantedAuthoritiesConverter`,
+  поэтому роли `USER`/`ADMIN` из Keycloak доступны в `hasRole`.
+- Ошибки 401 и 403 возвращаются обработчиками
+  `JsonErrorAuthenticationEntryPoint` и `JsonErrorAccessDeniedHandler` в формате `ErrorResponse`.
+
+### Методовая авторизация
+- Компонент `UserSecurity` извлекает идентификатор пользователя из claim `user_id` (либо `sub`)
+  и определяет, является ли запрос администраторским.
+- `UserAvatarController` использует `@PreAuthorize("@userSecurity.canAccessUserResource(#userId, authentication)")`,
+  чтобы доступ к операциям был только у владельца ресурса или администратора.
+- Аналогичным образом можно защитить будущие контроллеры, переиспользуя методы `userSecurity`.
 
 ## Офлайн-прогрев
 
@@ -140,6 +198,13 @@ Swagger UI доступен по адресу `http://localhost:8080/api/v1/swag
 `MethodArgumentNotValidException`, `ConstraintViolationException`),
 так и для кастомных потомков `BaseServiceException`.
 
+### Ошибки безопасности
+- 401 (`ErrorCode.UNAUTHORIZED`, `USR-4001`) — возвращается
+  `JsonErrorAuthenticationEntryPoint`, если токен отсутствует или недействителен.
+- 403 (`ErrorCode.ACCESS_DENIED`, `USR-4003`) — возвращается
+  `JsonErrorAccessDeniedHandler`, когда токен не даёт необходимых прав.
+- Ответы формируются в формате `ErrorResponse`: в `details.path` добавляется URI запроса, что упрощает трассировку.
+
 ### Формат ответа `ErrorResponse`
 
 | Поле        | Тип                   | Описание                                              |
@@ -173,6 +238,8 @@ Swagger UI доступен по адресу `http://localhost:8080/api/v1/swag
 | `USR-2002` | 404         | Пользователь не найден                                       |
 | `USR-2003` | 404         | Аватар не найден                                             |
 | `USR-3000` | 409         | Нарушение ограничений целостности (например, уникальность)   |
+| `USR-4001` | 401         | Требуется аутентификация                                     |
+| `USR-4003` | 403         | Доступ запрещён                                              |
 | `USR-7000` | 500         | Ошибки файлового хранилища                                   |
 | `USR-9000` | 500         | Неперехваченные исключения (`RuntimeException`, `Exception`) |
 
@@ -261,3 +328,8 @@ Swagger UI доступен по адресу `http://localhost:8080/api/v1/swag
   вносите только через команду `--write-verification-metadata`.
 - При необходимости полной очистки окружения остановите демоны Gradle
   (`./gradlew --stop`) и удалите каталоги `.gradle/` и `~/.gradle/caches`.
+
+## P.S.
+- Форматирование таблиц в README фиксируется средствами IDE;
+  не пытайтесь вручную «выравнивать» их или перестраивать.
+- Не используйте прямые ссылки на файлы проекта в формате 【F:filename†L1-L10】.
