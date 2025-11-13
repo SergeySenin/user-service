@@ -2,6 +2,11 @@ spring:
   config:
     activate:
       on-profile: local
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9090/realms/users
   datasource:
     url: jdbc:postgresql://localhost:5432/user_service
     username: user
@@ -20,11 +25,17 @@ spring:
       host: localhost
       port: 6379
 
+app:
+  security:
+    jwt:
+      audience: user-service
+      user-id-claim: user_id
+
 services:
   s3:
     endpoint: http://127.0.0.1:9000
-    access-key: local
-    secret-key: localpassword
+    access-key: user
+    secret-key: password
     bucket-name: corpbucket
     region: us-east-1
     url-expiration: PT120H

@@ -13,6 +13,11 @@ spring:
   liquibase:
     enabled: false
     contexts: test
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9999/realms/test
   main:
     banner-mode: off
   autoconfigure:

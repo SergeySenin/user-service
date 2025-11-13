@@ -26,6 +26,12 @@ public enum ErrorCode {
     // → org.hibernate.exception.ConstraintViolationException
     CONSTRAINT_VIOLATION("USR-3000", HttpStatus.CONFLICT, "Нарушено ограничение целостности данных"),
 
+    // → AuthenticationEntryPoint
+    UNAUTHORIZED("USR-4001", HttpStatus.UNAUTHORIZED, "Требуется аутентификация"),
+
+    // → AccessDeniedHandler
+    ACCESS_DENIED("USR-4003", HttpStatus.FORBIDDEN, "Доступ запрещён"),
+
     // → FileStorageException
     FILE_STORAGE_ERROR("USR-7000", HttpStatus.INTERNAL_SERVER_ERROR, "Ошибка файлового хранилища"),
 

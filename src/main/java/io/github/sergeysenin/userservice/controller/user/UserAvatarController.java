@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,6 +46,7 @@ public class UserAvatarController {
             summary = "Загрузить новый аватар",
             description = "Принимает файл изображения, сохраняет все версии в S3 и возвращает ключи объектов"
     )
+    @PreAuthorize("@userSecurity.canAccessUserResource(#userId, authentication)")
     public UploadAvatarResponse uploadAvatar(
             @PathVariable("userId")
             @NotNull
@@ -65,6 +67,7 @@ public class UserAvatarController {
             summary = "Получить ссылки на аватар",
             description = "Возвращает предварительно подписанные URL для всех доступных версий аватара"
     )
+    @PreAuthorize("@userSecurity.canAccessUserResource(#userId, authentication)")
     public GetAvatarResponse getAvatar(
             @PathVariable("userId")
             @NotNull
@@ -81,6 +84,7 @@ public class UserAvatarController {
             summary = "Удалить аватар",
             description = "Удаляет все версии аватара пользователя из S3 и базы данных"
     )
+    @PreAuthorize("@userSecurity.canAccessUserResource(#userId, authentication)")
     public DeleteAvatarResponse deleteAvatar(
             @PathVariable("userId")
             @NotNull

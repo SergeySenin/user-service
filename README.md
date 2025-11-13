@@ -1,8 +1,7 @@
 # User Service
 
-Сервис управления пользователями на Spring Boot 3.5 и Java 17.
-Приложение использует PostgreSQL, Redis, S3-совместимое хранилище и интеграции по REST.
-Ниже собраны инструкции по запуску, настройке профилей и тестированию.
+Работает с PostgreSQL и Redis, хранит аватары в S3-совместимом хранилище, интегрируется с Keycloak и Kafka.
+Ниже собраны инструкции по запуску, настройке профилей, тестированию и офлайн-прогреву.
 
 ## Содержание
 - [Быстрый старт](#быстрый-старт)
@@ -12,48 +11,57 @@
   - [Модель данных](#модель-данных)
 - [Профили конфигурации](#профили-конфигурации)
 - [Переменные окружения `prod`](#переменные-окружения-prod)
+- [Keycloak и JWT](#keycloak-и-jwt)
 - [Конфигурация и параметры](#конфигурация-и-параметры)
   - [Параметры аватаров](#параметры-аватаров)
   - [Настройки S3](#настройки-s3)
+  - [Параметры безопасности](#параметры-безопасности)
   - [Логирование](#логирование)
+- [Безопасность API](#безопасность-api)
+  - [Публичные эндпойнты](#публичные-эндпойнты)
+  - [Проверка JWT](#проверка-jwt)
+  - [Методовая авторизация](#методовая-авторизация)
 - [Офлайн-прогрев](#офлайн-прогрев)
 - [Тестирование](#тестирование)
 - [OpenAPI и Swagger UI](#openapi-и-swagger-ui)
 - [Обработка ошибок](#обработка-ошибок)
-- [Формат ответа `ErrorResponse`](#формат-ответа-errorresponse)
-- [Основные коды ошибок](#основные-коды-ошибок)
+  - [Ошибки безопасности](#ошибки-безопасности)
+  - [Формат ответа `ErrorResponse`](#формат-ответа-errorresponse)
+  - [Основные коды ошибок](#основные-коды-ошибок)
 - [Полезные файлы](#полезные-файлы)
 - [Проверка зависимостей Gradle](#проверка-зависимостей-gradle)
 - [Как обновлять metadata](#как-обновлять-metadata)
-- [Ограничения](#ограничения)
+  - [Ограничения](#ограничения)
+- [P.S.](#ps)
 
 ## Быстрый старт
 
 ### Локальная разработка (`local`)
 1. Установите Docker и Docker Compose v2.
-2. Выполните `docker compose up -d` в корне репозитория — поднимутся PostgreSQL, Redis и MinIO
-   с зафиксированными образами, healthcheck’ами и предварительно созданным бакетом `corpbucket`.
-   【F:docker-compose.yml†L1-L75】
-3. Запустите приложение командой `./gradlew bootRun`.
-   Профиль `local` активируется автоматически.
+2. Выполните `docker compose up -d` в корне репозитория — запустятся PostgreSQL 18.0 для приложения,
+   отдельная PostgreSQL 18.0 для Keycloak, сам Keycloak, Redis 8.2.3-alpine, Kafka 4.0.0, MinIO и клиент `mc`.
+   Все сервисы проброшены на `127.0.0.1`, теги образов зафиксированы,
+   для MinIO автоматически создаётся бакет `corpbucket` с приватной политикой доступа.
+3. Запустите приложение командой `./gradlew bootRun`. Профиль `local` активируется автоматически.
 4. Проверяйте здоровье сервиса по адресу `http://localhost:8080/api/v1/actuator/health`.
-   Консоль MinIO доступна на `http://localhost:9001` (логин/пароль `local/localpassword`).
+   Консоль MinIO доступна на `http://127.0.0.1:9001` (логин/пароль `user/password`),
+   консоль Keycloak — на `http://127.0.0.1:9090` (администратор `admin/password`).
 
-Параметры локального окружения заданы в `src/main/resources/application-local.yaml`, инфраструктура описана
-в `docker-compose.yml`.【F:src/main/resources/application-local.yaml†L5-L34】【F:docker-compose.yml†L1-L75】
+Параметры локального окружения заданы в `src/main/resources/application-local.yaml`,
+инфраструктура описана в `docker-compose.yml`.
 
 ### Контейнер для `prod`
 1. Соберите образ: `docker build -t user-service .`.
-   Мультистейдж-сборка упакует `bootJar`, настроит
-   JRE-слой и добавит healthcheck.【F:Dockerfile†L1-L33】
+   Мультистейдж-сборка упакует `bootJar`,
+   настроит JRE-слой и добавит healthcheck.
 2. Запустите контейнер, передав переменные окружения из раздела
    [«Переменные окружения `prod`»](#переменные-окружения-prod) и пробросив
    порт `8080`, например: `docker run -p 8080:8080 --env-file .env user-service`.
 3. Healthcheck внутри образа обращается к `/api/v1/actuator/health/readiness`,
-   поэтому его же следует мониторить в оркестраторе.【F:Dockerfile†L25-L30】
+   поэтому его же следует мониторить в оркестраторе.
 
 Внутри контейнера профиль `prod` активируется переменной окружения `SPRING_PROFILES_ACTIVE=prod`
-(см. `Dockerfile`), а параметры JVM задаются через `JAVA_TOOL_OPTIONS`.【F:Dockerfile†L19-L24】
+(см. `Dockerfile`), а параметры JVM задаются через `JAVA_TOOL_OPTIONS`.
 
 ## Архитектура и код
 
@@ -61,7 +69,6 @@
 - **Liquibase-миграции.** Базовый changeset `user_V001__insert_users.sql` формирует таблицы пользователей и аватаров,
   настраивает внешние ключи и добавляет демонстрационные записи для профилей `local` и `test`. Контекстно-зависимые
   TRUNCATE/INSERT выполняются только вне `prod`, поэтому боевое окружение стартует с пустыми таблицами.
-  【F:src/main/resources/db/changelog/changeset/user_V001__insert_users.sql†L1-L77】
 
 ## Профили конфигурации
 
@@ -80,15 +87,30 @@
 | S3              | `S3_ENDPOINT`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET`, `S3_REGION`, `S3_URL_EXPIRATION`                                                                             | Настройка S3-совместимого хранилища, региона (`us-east-1` по умолчанию) и TTL presigned-ссылок |
 | Внешние сервисы | `PROJECT_SVC_URL`, `PAYMENT_SVC_URL`                                                                                                                                       | Базовые URL интеграций                                                                         |
 | Аватары         | `AVATAR_STORAGE_PATH`, `AVATAR_THUMBNAIL_MAX_SIDE`, `AVATAR_PROFILE_MAX_SIDE`,<br>`AVATAR_ALLOWED_MIME_TYPE_1`, `AVATAR_ALLOWED_MIME_TYPE_2`, `AVATAR_ALLOWED_MIME_TYPE_3` | Переопределение параметров хранения и валидации загрузок                                       |
+| Keycloak        | `KEYCLOAK_ISSUER_URI`, `KEYCLOAK_AUDIENCE`, `KEYCLOAK_USER_ID_CLAIM`                                                                                                       | Настройка ресурс-сервера и claim с идентификатором пользователя                                |                                                                                                |
 
-Все переменные заданы в `src/main/resources/application-prod.yaml`: обязательные
-отмечены оператором `:?`, остальные имеют дефолты. Redis по умолчанию обращается
-к сервису `redis` из docker-compose, а URL сторонних сервисов и ключи доступа к S3
-обязательны для прод-окружения.【F:src/main/resources/application-prod.yaml†L5-L33】
+Все переменные заданы в `src/main/resources/application-prod.yaml`: обязательные отмечены оператором `:?`,
+остальные имеют дефолты. Redis по умолчанию обращается к сервису `redis` из docker-compose,
+а URL сторонних сервисов и ключи доступа к S3 обязательны для прод-окружения.
 
 Liquibase использует master-changelog `db/changelog/db.changelog-master.yaml`,
 поэтому убедитесь, что файл доступен в classpath при запуске контейнера.
-【F:src/main/resources/application-prod.yaml†L13-L15】
+
+## Keycloak и JWT
+
+### Локальное окружение
+- Keycloak поднимается из `docker-compose.yml` и доступен на `http://localhost:9090`.
+- Realm `users` настроен с публичным клиентом `postman` (Direct Access Grants)
+  и клиентом-аудиторией `user-service`, добавляющим значение в claim `aud`.
+- Пользователи `test_user` (роль `USER`) и `admin_user` (роль `ADMIN`) предсозданы для быстрых проверок.
+- Профиль `local` в `application-local.yaml` сразу указывает:
+  `issuer-uri`, `audience` и имя claim с идентификатором пользователя (`user_id`).
+
+### Переменные окружения для prod
+- `KEYCLOAK_ISSUER_URI` — обязательный issuer realm-а; без него приложение не запустится.
+- `KEYCLOAK_AUDIENCE` — ожидаемая аудитория токена. Если клиент в Keycloak переименован, обновите переменную.
+- `KEYCLOAK_USER_ID_CLAIM` — claim с идентификатором пользователя.
+  По умолчанию `user_id`, при его отсутствии сервис читает стандартный `sub`.
 
 ## Конфигурация и параметры
 
@@ -97,25 +119,50 @@ Liquibase использует master-changelog `db/changelog/db.changelog-maste
 в `application-prod.yaml`. Они определяют базовый префикс ключей в S3, габариты превью/профильной
 версии и список допустимых MIME-типов. Класс `AvatarProperties` нормализует значения, гарантирует
 ненулевой список MIME и предоставляет дефолты (storage path, JPEG/PNG/WebP, размеры 170 и 1080 пикселей).
-【F:src/main/resources/application-local.yaml†L23-L34】
-【F:src/main/resources/application-prod.yaml†L21-L28】
-【F:src/main/java/io/github/sergeysenin/userservice/config/avatar/AvatarProperties.java†L17-L105】
-【F:docker-compose.yml†L7-L75】
 
 ### Настройки S3
 Секция `services.s3` описывает подключение к MinIO/AWS S3: endpoint, ключи доступа, bucket и время жизни presigned URL.
-Профиль `local` направляет на MinIO из `docker-compose.yml`, `prod` требует обязательные переменные. 
+Профиль `local` направляет на MinIO из `docker-compose.yml`, `prod` требует обязательные переменные.
 В коде значения биндятся в `S3Properties`, где нормализуется регион и задаётся дефолтное время истечения `PT120H`.
-【F:src/main/resources/application-local.yaml†L23-L34】
-【F:src/main/resources/application-prod.yaml†L21-L28】
-【F:src/main/java/io/github/sergeysenin/userservice/config/s3/S3Properties.java†L13-L72】
-【F:docker-compose.yml†L7-L75】
+
+### Параметры безопасности
+- `spring.security.oauth2.resourceserver.jwt.issuer-uri` — URL realm-а Keycloak.
+  В `local` зашит `http://localhost:9090/realms/users`, а в `prod` значение прокидывается через `KEYCLOAK_ISSUER_URI`.
+- `app.security.jwt.audience` — ожидаемая аудитория токена. Значение берётся из `app.security.jwt.audience`,
+  по умолчанию равно `user-service` и может быть переопределено переменной `KEYCLOAK_AUDIENCE`.
+- `app.security.jwt.user-id-claim` — имя claim для идентификатора пользователя. По умолчанию `user_id`,
+  но можно сменить через `KEYCLOAK_USER_ID_CLAIM`. При отсутствии claim используется fallback на `sub`.
+- Все параметры задаются в `application-local.yaml` и `application-prod.yaml`,
+  поэтому при обновлении настроек Keycloak достаточно поправить профиль или переменные окружения.
 
 ### Логирование
 `logback-spring.xml` настраивает асинхронный вывод в консоль с профилями `local`, `prod` и `test`.
-В `local` включён детальный DEBUG для пакета приложения и WARN для Spring/Hibernate, тогда как
-`prod` ограничивается INFO. Очередь асинхронного аппендера увеличена до 1024 и настроена на
-неблокирующий режим, чтобы не тормозить обработку запросов.【F:src/main/resources/logback-spring.xml†L1-L45】
+В `local` включён детальный DEBUG для пакета приложения и WARN для Spring/Hibernate,
+тогда как `prod` ограничивается INFO. Очередь асинхронного аппендера увеличена до
+1024 и настроена на неблокирующий режим, чтобы не тормозить обработку запросов.
+
+## Безопасность API
+
+### Публичные эндпойнты
+- `OPTIONS /**` — предзапросы браузеров.
+- `GET /actuator/health/**`, `GET /actuator/info` — мониторинг состояния.
+- `/v3/api-docs/**`, `/swagger-ui/**`, `/swagger-ui.html` — документация.
+- Все остальные эндпойнты требуют валидного Bearer-токена.
+
+### Проверка JWT
+- Приложение настроено как OAuth2 Resource Server и валидирует токены локально через `JwtDecoder`.
+- Проверяются подпись, срок действия, issuer и аудитория (`aud`) с помощью `AudienceValidator`.
+- Claim `roles` преобразуется в `ROLE_*` через `JwtGrantedAuthoritiesConverter`,
+  поэтому роли `USER`/`ADMIN` из Keycloak доступны в `hasRole`.
+- Ошибки 401 и 403 возвращаются обработчиками
+  `JsonErrorAuthenticationEntryPoint` и `JsonErrorAccessDeniedHandler` в формате `ErrorResponse`.
+
+### Методовая авторизация
+- Компонент `UserSecurity` извлекает идентификатор пользователя из claim `user_id` (либо `sub`)
+  и определяет, является ли запрос администраторским.
+- `UserAvatarController` использует `@PreAuthorize("@userSecurity.canAccessUserResource(#userId, authentication)")`,
+  чтобы доступ к операциям был только у владельца ресурса или администратора.
+- Аналогичным образом можно защитить будущие контроллеры, переиспользуя методы `userSecurity`.
 
 ## Офлайн-прогрев
 
@@ -123,20 +170,17 @@ Liquibase использует master-changelog `db/changelog/db.changelog-maste
 - проверяет наличие Docker и Java, выводит их версии;
 - подготавливает Gradle Wrapper и прогревает зависимости
   (включая Testcontainers) через сборку с тестами;
-- скачивает заранее pinned Docker-образы PostgreSQL, Redis, Temurin JDK/JRE
-  и служебные образы Testcontainers (`testcontainers/ryuk`, `alpine`).
-  При включённом флаге `PULL_MINIO` дополнительно подтягивает MinIO и `mc`.
+- скачивает заранее зафиксированные Docker-образы PostgreSQL, Redis, Keycloak, Kafka, Temurin JDK/JRE,
+  а также служебные образы Testcontainers (`testcontainers/ryuk`, `alpine`);
+- поддерживает гибкие настройки через переменные окружения:
+  - версии Docker-образов переопределяются (например, POSTGRES_IMAGE=18.1 ./install.sh);
+  - опциональные сервисы (Keycloak, Kafka, MinIO) управляются флагами PULL_*=0|1.
 
-Теги можно переопределить через переменные окружения (`POSTGRES_TAG`, `REDIS_TAG`, `TEMURIN_JDK_TAG`, `TEMURIN_JRE_TAG`,
-`MINIO_TAG`, `MC_TAG`), а флаг `PULL_MINIO=0` отключает загрузку MinIO, если она не требуется для офлайновой работы.
-【F:install.sh†L16-L29】【F:install.sh†L75-L89】
-
-После выполнения скрипта можно запускать Gradle с
-флагом `--offline` и использовать локальные образы.【F:install.sh†L1-L96】
+После выполнения скрипта можно запускать Gradle с флагом `--offline` и использовать локальные образы.
 
 ## Тестирование
-- Интеграционный smoke-тест `DatabaseSmokeIt` поднимает PostgreSQL 16.3
-в Testcontainers и выполняет `select 1`, проверяя корректность `DataSource`.
+- Интеграционный smoke-тест `DatabaseSmokeIt` поднимает PostgreSQL 18.0
+  в Testcontainers и выполняет `select 1`, проверяя корректность `DataSource`.
 - Gradle настроен на запуск тестов в профиле `test` с подробными логами стандартных потоков.
 
 Команда запуска: `./gradlew test`. При необходимости предварительно выполните офлайн-прогрев.
@@ -153,6 +197,13 @@ Swagger UI доступен по адресу `http://localhost:8080/api/v1/swag
 Он используется как для стандартных ошибок Spring (`BindException`,
 `MethodArgumentNotValidException`, `ConstraintViolationException`),
 так и для кастомных потомков `BaseServiceException`.
+
+### Ошибки безопасности
+- 401 (`ErrorCode.UNAUTHORIZED`, `USR-4001`) — возвращается
+  `JsonErrorAuthenticationEntryPoint`, если токен отсутствует или недействителен.
+- 403 (`ErrorCode.ACCESS_DENIED`, `USR-4003`) — возвращается
+  `JsonErrorAccessDeniedHandler`, когда токен не даёт необходимых прав.
+- Ответы формируются в формате `ErrorResponse`: в `details.path` добавляется URI запроса, что упрощает трассировку.
 
 ### Формат ответа `ErrorResponse`
 
@@ -187,6 +238,8 @@ Swagger UI доступен по адресу `http://localhost:8080/api/v1/swag
 | `USR-2002` | 404         | Пользователь не найден                                       |
 | `USR-2003` | 404         | Аватар не найден                                             |
 | `USR-3000` | 409         | Нарушение ограничений целостности (например, уникальность)   |
+| `USR-4001` | 401         | Требуется аутентификация                                     |
+| `USR-4003` | 403         | Доступ запрещён                                              |
 | `USR-7000` | 500         | Ошибки файлового хранилища                                   |
 | `USR-9000` | 500         | Неперехваченные исключения (`RuntimeException`, `Exception`) |
 
@@ -195,23 +248,17 @@ Swagger UI доступен по адресу `http://localhost:8080/api/v1/swag
 В этом случае обработчик автоматически сформирует ответ в нужном формате.
 
 ## Полезные файлы
-- `docker-compose.yml` — локальная инфраструктура для профиля `local`: PostgreSQL, Redis, MinIO
-  и `mc` создают бакет `corpbucket` с публичной политикой доступа.【F:docker-compose.yml†L7-L75】
+- `docker-compose.yml` — локальная инфраструктура для профиля `local`: две PostgreSQL 18.0 (приложение и Keycloak),
+  Keycloak, Redis, Kafka, MinIO и `mc`, которые создают бакет `corpbucket` с приватной политикой доступа.
 - `Dockerfile` — мультистейдж-сборка образа с разделением на build/runtime, 
-  настройкой профиля `prod`, healthcheck и отдельным пользователем `app`.【F:Dockerfile†L1-L33】
-- `install.sh` — сценарий офлайн-прогрева: проверяет инструменты, прогревает Gradle
-  и скачивает pinned Docker-образы для приложения и тестов.【F:install.sh†L1-L96】
+  настройкой профиля `prod`, healthcheck и отдельным пользователем `app`.
+- `install.sh` — сценарий офлайн-прогрева: проверяет инструменты,
+  прогревает Gradle и скачивает pinned Docker-образы для приложения и тестов.
 - `src/main/resources/application-*.yaml` — базовые настройки приложения 
   и профилей `local`/`prod`, включая параметры Redis, метрик и аватаров;
   `src/test/resources/application-test.yaml` — конфигурация профиля `test` для интеграционных тестов.
-  【F:src/main/resources/application.yaml†L1-L48】
-  【F:src/main/resources/application-local.yaml†L5-L34】
-  【F:src/main/resources/application-prod.yaml†L5-L45】
-  【F:src/test/resources/application-test.yaml†L1-L21】
 - `docs/tech-debt-log.md` — журнал технического долга;
   `docs/unit-test-guidelines.md` — правила написания юнит-тестов в проекте.
-  【F:docs/tech-debt-log.md†L1-L55】
-  【F:docs/unit-test-guidelines.md†L1-L120】
 
 ## Проверка зависимостей Gradle
 
@@ -281,3 +328,8 @@ Swagger UI доступен по адресу `http://localhost:8080/api/v1/swag
   вносите только через команду `--write-verification-metadata`.
 - При необходимости полной очистки окружения остановите демоны Gradle
   (`./gradlew --stop`) и удалите каталоги `.gradle/` и `~/.gradle/caches`.
+
+## P.S.
+- Форматирование таблиц в README фиксируется средствами IDE;
+  не пытайтесь вручную «выравнивать» их или перестраивать.
+- Не используйте прямые ссылки на файлы проекта в формате 【F:filename†L1-L10】.

@@ -12,7 +12,7 @@ import org.gradle.testing.jacoco.tasks.JacocoReportBase
 plugins {
     java
     checkstyle
-    id("org.springframework.boot") version "3.5.6"
+    id("org.springframework.boot") version "3.5.7"
     id("io.spring.dependency-management") version "1.1.7"
     jacoco
 }
@@ -38,8 +38,8 @@ dependencies {
      * Dependency Platforms (Bills Of Materials)
      */
     implementation(platform("org.springframework.cloud:spring-cloud-dependencies:2025.0.0"))
-    implementation(platform("software.amazon.awssdk:bom:2.34.5"))
-    testImplementation(platform("org.testcontainers:testcontainers-bom:1.21.3"))
+    implementation(platform("software.amazon.awssdk:bom:2.37.3"))
+    testImplementation(platform("org.testcontainers:testcontainers-bom:2.0.1"))
 
     /**
      * Core Starters: Observability / Validation / Web
@@ -55,6 +55,12 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
     /**
+     * Database Driver & Migrations
+     */
+    implementation("org.liquibase:liquibase-core")
+    runtimeOnly("org.postgresql:postgresql")
+
+    /**
      * Caching / Redis
      */
     implementation("org.springframework.boot:spring-boot-starter-data-redis") {
@@ -63,15 +69,10 @@ dependencies {
     implementation("redis.clients:jedis")
 
     /**
-     * Database Driver & Migrations
+     * Security / OAuth2 Resource Server
      */
-    implementation("org.liquibase:liquibase-core")
-    runtimeOnly("org.postgresql:postgresql")
-
-    /**
-     * OpenAPI / Docs
-     */
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
 
     /**
      * Spring Cloud
@@ -79,16 +80,26 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
 
     /**
-     * Object Storage (AWS SDK v2)
+     * Messaging / Kafka
      */
-    implementation("software.amazon.awssdk:s3")
+    implementation("org.springframework.kafka:spring-kafka")
 
     /**
      * Serialization / Media
      */
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv")
-    implementation("net.coobird:thumbnailator:0.4.20")
+    implementation("net.coobird:thumbnailator:0.4.21")
     runtimeOnly("com.github.usefulness:webp-imageio:0.10.2")
+
+    /**
+     * Object Storage (AWS SDK v2)
+     */
+    implementation("software.amazon.awssdk:s3")
+
+    /**
+     * OpenAPI / Docs
+     */
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
 
     /**
      * Developer Tooling (Annotation Processors)
@@ -105,67 +116,20 @@ dependencies {
      * Testing
      */
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("org.springframework.kafka:spring-kafka-test")
 
     /**
      * Testcontainers
      */
-    testImplementation("org.testcontainers:junit-jupiter")
-    testImplementation("org.testcontainers:postgresql")
-    testImplementation("com.redis.testcontainers:testcontainers-redis-junit:1.6.4")
+    testImplementation("org.testcontainers:testcontainers-junit-jupiter")
+    testImplementation("org.testcontainers:testcontainers-postgresql")
+    testImplementation("org.testcontainers:testcontainers-kafka")
+    testImplementation("com.redis:testcontainers-redis:2.2.4")
 }
-
-tasks.test {
-    useJUnitPlatform()
-    // Вывод стандартных потоков включён — удобно видеть подробные логи тестов.
-    testLogging { showStandardStreams = true }
-    systemProperty("spring.profiles.active", "test")
-    finalizedBy(tasks.named("jacocoTestReport"))
-}
-
-tasks.named("check") {
-    dependsOn(
-        tasks.named("jacocoTestCoverageVerification"),
-        tasks.named("checkstyleMain"),
-        tasks.named("checkstyleTest")
-    )
-}
-
-fun configureCheckstyleTask(
-    taskProvider: TaskProvider<Checkstyle>,
-    stylesheet: RegularFile,
-    excludePatterns: List<String>
-) {
-    taskProvider.configure {
-        reports {
-            xml.required.set(true)
-            html.required.set(true)
-            html.stylesheet = resources.text.fromFile(stylesheet)
-        }
-
-        excludePatterns.forEach(::exclude)
-    }
-}
-
-val checkstyleStylesheet = layout.projectDirectory.file("config/checkstyle/checkstyle-noframes-severity-sorted.xsl")
-val checkstyleExcludePatterns = listOf("**/resources/**", "**/generated/**")
-val checkstyleTaskNames = listOf("checkstyleMain", "checkstyleTest")
-
-extensions.configure<CheckstyleExtension>("checkstyle") {
-    toolVersion = "10.17.0"
-    configDirectory.set(layout.projectDirectory.dir("config/checkstyle"))
-    config = resources.text.fromFile(layout.projectDirectory.file("config/checkstyle/checkstyle.xml"))
-    configProperties["checkstyle.enableExternalDtdLoad"] = "true"
-    isIgnoreFailures = false
-}
-
-checkstyleTaskNames
-    .map { tasks.named<Checkstyle>(it) }
-    .forEach { task ->
-        configureCheckstyleTask(task, checkstyleStylesheet, checkstyleExcludePatterns)
-    }
 
 jacoco {
-    toolVersion = "0.8.13"
+    toolVersion = "0.8.14"
 }
 
 tasks.named<JacocoReport>("jacocoTestReport") {
@@ -186,12 +150,46 @@ tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     violationRules {
         rule {
             limit {
-                minimum = 0.0.toBigDecimal() // Временное отключение (сделать 1.0 после первых модульных тестов).
+                // Временное отключение (сделать 0.9 после первых модульных тестов).
+                minimum = 0.0.toBigDecimal()
             }
         }
     }
 
     configureJacocoClassDirectories(this)
+}
+
+extensions.configure<CheckstyleExtension>("checkstyle") {
+    toolVersion = "12.1.1"
+    configDirectory.set(layout.projectDirectory.dir("config/checkstyle"))
+    config = resources.text.fromFile(layout.projectDirectory.file("config/checkstyle/checkstyle.xml"))
+    isIgnoreFailures = false
+}
+
+val checkstyleTaskNames = listOf("checkstyleMain", "checkstyleTest")
+val checkstyleStylesheet = layout.projectDirectory.file("config/checkstyle/checkstyle-noframes-severity-sorted.xsl")
+val checkstyleExcludePatterns = listOf("**/resources/**", "**/generated/**")
+
+checkstyleTaskNames
+    .map { tasks.named<Checkstyle>(it) }
+    .forEach { task ->
+        configureCheckstyleTask(task, checkstyleStylesheet, checkstyleExcludePatterns)
+    }
+
+tasks.test {
+    useJUnitPlatform()
+    // Вывод стандартных потоков включён — удобно видеть подробные логи тестов.
+    testLogging { showStandardStreams = true }
+    systemProperty("spring.profiles.active", "test")
+    finalizedBy(tasks.named("jacocoTestReport"))
+}
+
+tasks.named("check") {
+    dependsOn(
+        tasks.named("jacocoTestCoverageVerification"),
+        tasks.named("checkstyleMain"),
+        tasks.named("checkstyleTest")
+    )
 }
 
 fun configureJacocoClassDirectories(jacocoTask: JacocoReportBase) {
@@ -202,7 +200,7 @@ fun configureJacocoClassDirectories(jacocoTask: JacocoReportBase) {
                 exclude(
                     "**/client/**",
                     "**/config/**",
-                    "**controller/**",
+                    "**/controller/**",
                     "**/dto/**",
                     "**/entity/**",
                     "**/exception/**",
@@ -214,4 +212,20 @@ fun configureJacocoClassDirectories(jacocoTask: JacocoReportBase) {
             }
         )
     )
+}
+
+fun configureCheckstyleTask(
+    taskProvider: TaskProvider<Checkstyle>,
+    stylesheet: RegularFile,
+    excludePatterns: List<String>
+) {
+    taskProvider.configure {
+        reports {
+            xml.required.set(true)
+            html.required.set(true)
+            html.stylesheet = resources.text.fromFile(stylesheet)
+        }
+
+        excludePatterns.forEach(::exclude)
+    }
 }
