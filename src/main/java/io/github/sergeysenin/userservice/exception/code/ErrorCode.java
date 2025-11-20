@@ -17,9 +17,11 @@ public enum ErrorCode {
     AVATAR_UPLOAD_FAILED("USR-1002", HttpStatus.UNPROCESSABLE_ENTITY, "Не удалось загрузить аватар"),
 
     // → EntityNotFoundException, NoSuchElementException
-    ENTITY_NOT_FOUND("USR-2001", HttpStatus.NOT_FOUND, "Сущность не найдена"),
+    ENTITY_NOT_FOUND("USR-2000", HttpStatus.NOT_FOUND, "Сущность не найдена"),
     // → UserNotFoundException
-    USER_NOT_FOUND("USR-2002", HttpStatus.NOT_FOUND, "Пользователь не найден"),
+    USER_NOT_FOUND("USR-2001", HttpStatus.NOT_FOUND, "Пользователь не найден"),
+    // → CountryNotFoundException
+    COUNTRY_NOT_FOUND("USR-2002", HttpStatus.NOT_FOUND, "Страна не найдена"),
     // → AvatarNotFoundException
     AVATAR_NOT_FOUND("USR-2003", HttpStatus.NOT_FOUND, "Аватар не найден"),
 
@@ -27,10 +29,9 @@ public enum ErrorCode {
     CONSTRAINT_VIOLATION("USR-3000", HttpStatus.CONFLICT, "Нарушено ограничение целостности данных"),
 
     // → AuthenticationEntryPoint
-    UNAUTHORIZED("USR-4001", HttpStatus.UNAUTHORIZED, "Требуется аутентификация"),
-
+    UNAUTHORIZED("USR-4000", HttpStatus.UNAUTHORIZED, "Требуется аутентификация"),
     // → AccessDeniedHandler
-    ACCESS_DENIED("USR-4003", HttpStatus.FORBIDDEN, "Доступ запрещён"),
+    ACCESS_DENIED("USR-4001", HttpStatus.FORBIDDEN, "Доступ запрещён"),
 
     // → FileStorageException
     FILE_STORAGE_ERROR("USR-7000", HttpStatus.INTERNAL_SERVER_ERROR, "Ошибка файлового хранилища"),
