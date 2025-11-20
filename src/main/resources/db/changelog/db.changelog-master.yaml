@@ -1,4 +1,4 @@
 databaseChangeLog:
   - include:
-      file: changeset/user_V001__insert_users.sql
+      file: changeset/001-users-schema-and-demo-data.sql
       relativeToChangelogFile: true

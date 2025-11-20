@@ -49,9 +49,6 @@ public class User {
     @Column(name = "phone", length = 16, nullable = false, unique = true)
     private String phone;
 
-    @Column(name = "password", length = 256, nullable = false)
-    private String password;
-
     @Column(name = "active", nullable = false)
     private boolean active = true;
 
@@ -98,7 +95,6 @@ public class User {
             String username,
             String email,
             String phone,
-            String password,
             Boolean active,
             String aboutMe,
             Country country,
@@ -110,16 +106,55 @@ public class User {
         user.username = username;
         user.email = email;
         user.phone = phone;
-        user.password = password;
+        if (active != null) {
+            user.active = active;
+        }
         user.aboutMe = aboutMe;
         user.country = country;
         user.city = city;
         user.experience = experience;
         user.userProfileAvatar = userProfileAvatar;
-        if (active != null) {
-            user.active = active;
-        }
         return user;
+    }
+
+    public void updateProfile(
+            String username,
+            String email,
+            String phone,
+            Boolean active,
+            String aboutMe,
+            Country country,
+            String city,
+            Short experience
+    ) {
+        if (username != null) {
+            this.username = username;
+        }
+        if (email != null) {
+            this.email = email;
+        }
+        if (phone != null) {
+            this.phone = phone;
+        }
+        if (active != null) {
+            this.active = active;
+        }
+        if (aboutMe != null) {
+            this.aboutMe = aboutMe;
+        }
+        if (country != null) {
+            this.country = country;
+        }
+        if (city != null) {
+            this.city = city;
+        }
+        if (experience != null) {
+            this.experience = experience;
+        }
+    }
+
+    public boolean hasAvatar() {
+        return userProfileAvatar != null;
     }
 
     public void updateAvatar(UserProfileAvatar avatar) {
