@@ -1,10 +1,13 @@
 package io.github.sergeysenin.userservice.config.swagger;
 
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.ExternalDocumentation;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
-import io.swagger.v3.oas.models.ExternalDocumentation;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 
 import org.springdoc.core.models.GroupedOpenApi;
@@ -18,6 +21,8 @@ import java.util.List;
 
 @Configuration
 public class SwaggerConfig {
+
+    private static final String BEARER_SECURITY_SCHEME = "bearerAuth";
 
     private final String applicationName;
     private final String applicationVersion;
@@ -36,6 +41,8 @@ public class SwaggerConfig {
     @Bean
     public OpenAPI userServiceOpenApi() {
         return new OpenAPI()
+                .components(buildSecurityComponents())
+                .addSecurityItem(new SecurityRequirement().addList(BEARER_SECURITY_SCHEME))
                 .info(buildApiInfo())
                 .servers(List.of(buildPrimaryServer()))
                 .externalDocs(buildExternalDocumentation());
@@ -47,6 +54,18 @@ public class SwaggerConfig {
                 .group("public")
                 .pathsToMatch("/**")
                 .build();
+    }
+
+    private Components buildSecurityComponents() {
+        SecurityScheme bearerScheme = new SecurityScheme()
+                .name(BEARER_SECURITY_SCHEME)
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")
+                .description("Bearer-токен Keycloak (realm `users`, аудитория `user-service`)");
+
+        return new Components()
+                .addSecuritySchemes(BEARER_SECURITY_SCHEME, bearerScheme);
     }
 
     private Info buildApiInfo() {
